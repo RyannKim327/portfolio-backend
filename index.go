@@ -6,6 +6,11 @@ import (
 )
 
 func main() {
+	/*
+	 * TODO: There's nothing to do with this file
+	 * Everything is set
+	 */
+
 	for _, routes := range endpoints.Routes {
 		mw.Register(routes)
 	}

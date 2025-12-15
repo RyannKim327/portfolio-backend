@@ -2,6 +2,10 @@ package endpoints
 
 import utils "portfolio-backend/utils"
 
+/*  TODO: To include/merge the files/endpoint
+ * to call it into the frontend
+ */
+
 var Routes = []utils.Route{
 	Index,
 	Fetch,

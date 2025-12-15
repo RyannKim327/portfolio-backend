@@ -6,6 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// TODO: Just create a structure inside and call it outside
+
 type Route struct {
 	Method  string
 	Path    string

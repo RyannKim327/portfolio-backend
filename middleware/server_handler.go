@@ -19,6 +19,10 @@ func Post(endpoint string, function gin.HandlerFunc) {
 }
 
 func Register(routes utils.Route) {
+	/*
+	 * INFO: To register each of endpoint from endpoint package/folder
+	 * The purpose is to make the files cleaner and better looking
+	 */
 	if routes.Method == "" {
 		routes.Method = "GET"
 	}

@@ -12,6 +12,11 @@ import (
 var URL = fmt.Sprintf("https://api.github.com/gists/%s", os.Getenv("API_KEY"))
 
 func access(params AccessApi) GistResponseHandler {
+	/*
+	 * TODO: To create a door to access gist to the backend and
+	 * to distribute the data through the other platform connected
+	 * to my domain
+	 */
 	if params.Method == "" {
 		params.Method = "GET"
 	}
