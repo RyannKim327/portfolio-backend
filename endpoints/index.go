@@ -1,8 +1,12 @@
 package endpoints
 import "github.com/gin-gonic/gin"
+import utils "portfolio-backend/utils"
 
-func Index(ctx *gin.Context){
-	ctx.JSON(200, gin.H{
-		"error": "Hello World",
-	})	
+var Index = utils.Route {
+	Path: "/",
+	Handler: func(ctx *gin.Context){
+		ctx.JSON(200, gin.H{
+			"error": "Hello World",
+		})	
+	},
 }

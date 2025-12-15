@@ -2,12 +2,7 @@ package middleware
 
 import "github.com/gin-gonic/gin"
 import "fmt"
-
-type Routes struct {
-	Method string
-	Path string
-	Handler gin.HandlerFunc
-}
+import utils "portfolio-backend/utils"
 
 var app = gin.Default()
 
@@ -19,7 +14,11 @@ func Post(endpoint string, function gin.HandlerFunc){
 	app.POST(endpoint, function)
 }
 
-func Register(routes Routes){
+func Register(routes utils.Route){
+	if routes.Method == "" {
+		routes.Method = "GET"
+	}
+	
 	switch(routes.Method) {
 	case "GET":
 		app.GET(routes.Path, routes.Handler)

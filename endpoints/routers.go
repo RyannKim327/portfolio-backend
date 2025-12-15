@@ -1,16 +1,9 @@
 package endpoints
-import "github.com/gin-gonic/gin"
+import utils "portfolio-backend/utils"
 
-type Route struct {
-	Method string
-	Path string
-	Handler gin.HandlerFunc
-}
+// import "github.com/gin-gonic/gin"
 
-var Routes = []Route {
-	{
-		Method: "GET",
-		Path: "/",
-		Handler: Index,
-	},
+
+var Routes = []utils.Route {
+	Index,
 }
