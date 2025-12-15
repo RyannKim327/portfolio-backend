@@ -1,25 +1,29 @@
 package middleware
 
-import "github.com/gin-gonic/gin"
-import "fmt"
-import utils "portfolio-backend/utils"
+import (
+	"fmt"
+
+	utils "portfolio-backend/utils"
+
+	"github.com/gin-gonic/gin"
+)
 
 var app = gin.Default()
 
-func Get(endpoint string, function gin.HandlerFunc){
+func Get(endpoint string, function gin.HandlerFunc) {
 	app.GET(endpoint, function)
 }
 
-func Post(endpoint string, function gin.HandlerFunc){
+func Post(endpoint string, function gin.HandlerFunc) {
 	app.POST(endpoint, function)
 }
 
-func Register(routes utils.Route){
+func Register(routes utils.Route) {
 	if routes.Method == "" {
 		routes.Method = "GET"
 	}
-	
-	switch(routes.Method) {
+
+	switch routes.Method {
 	case "GET":
 		app.GET(routes.Path, routes.Handler)
 	case "POST":
@@ -31,14 +35,13 @@ func Register(routes utils.Route){
 	}
 }
 
-func StartServer(port ...int){
-
+func StartServer(port ...int) {
 	p := 8000
 	if len(port) > 0 {
 		p = port[0]
 	}
 
-	app.NoRoute(func (ctx *gin.Context){
+	app.NoRoute(func(ctx *gin.Context) {
 		const html = `
 			<html>
 				<head>
@@ -51,6 +54,6 @@ func StartServer(port ...int){
 		`
 		ctx.Data(404, "text/html; charset=utf-8", []byte(html))
 	})
-	
+
 	app.Run(fmt.Sprintf(":%d", p))
 }
