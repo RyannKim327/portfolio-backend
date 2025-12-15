@@ -7,6 +7,6 @@ var Index = utils.Route {
 	Handler: func(ctx *gin.Context){
 		ctx.JSON(200, gin.H{
 			"error": "Hello World",
-		})	
+		})
 	},
 }

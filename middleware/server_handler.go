@@ -39,10 +39,17 @@ func StartServer(port ...int){
 	}
 
 	app.NoRoute(func (ctx *gin.Context){
-
-		ctx.JSON(404, gin.H{
-			"error": "Miss ko na sya",
-		})
+		const html = `
+			<html>
+				<head>
+					<title>Page Not Found</title>
+				</head>
+				<body>
+					<h1>Wag na ngani hanapin</h1>
+				</body>
+			</html>
+		`
+		ctx.Data(404, "text/html; charset=utf-8", []byte(html))
 	})
 	
 	app.Run(fmt.Sprintf(":%d", p))
