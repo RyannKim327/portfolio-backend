@@ -46,9 +46,31 @@ func StartServer(port ...int) {
 			<html>
 				<head>
 					<title>Page Not Found</title>
+					<style>
+						body {
+							display: flex;
+							flex-direction: column;
+							height: 100dvh;
+							width: 100dvw;
+							align-items: center;
+							justify-content: center;
+							background-color: #191919;
+							color: white;
+						}
+						h1{
+							font-size: 5em;
+							margin: 0;
+						}
+						h3 {
+							margin: 0;
+							font-size: 3em;
+						}
+					</style>
 				</head>
 				<body>
-					<h1>Wag na ngani hanapin</h1>
+					<h1>404</h1>
+					<h3>Wag na ngani hanapin</h3>
+					<p>Tapos kami sisisihin mo kapag di mo nakita</p>
 				</body>
 			</html>
 		`
