@@ -10,5 +10,5 @@ func main() {
 		mw.Register(routes)
 	}
 
-	mw.StartServer(8001)
+	mw.StartServer(8000)
 }

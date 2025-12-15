@@ -53,12 +53,14 @@ portfolio-backend/
 ### Installation Steps
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd portfolio-backend
    ```
 
 2. **Install dependencies**
+
    ```bash
    go mod download
    ```
@@ -87,14 +89,15 @@ The server will start on port `8000` by default.
 ## 📡 API Endpoints
 
 ### Base URL
+
 ```
 http://localhost:8000
 ```
 
 ### Available Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
+| Method | Endpoint | Description      |
+| ------ | -------- | ---------------- |
 | GET    | `/`      | Welcome endpoint |
 
 ### Example Response
@@ -108,6 +111,7 @@ http://localhost:8000
 ### 404 Handler
 
 All undefined routes return:
+
 ```json
 {
   "error": "Miss ko na sya"
@@ -137,6 +141,7 @@ Development hot reload is configured via `.air.toml`. Key settings:
 ### Middleware System
 
 The application uses a custom middleware system that:
+
 - Registers routes dynamically
 - Supports all HTTP methods (GET, POST, PUT, DELETE)
 - Provides centralized server management
@@ -177,8 +182,10 @@ This project is open source and available under the [MIT License](LICENSE).
 ## 📞 Contact
 
 **Ryann Kim Sesgundo**
-- GitHub: [Your GitHub Profile]
-- Email: [Your Email]
+
+- [GitHub](https://github.com/RyannKim327)
+- Email: weryses19@gmail.com
+- [Linkedin](https://www.linkedin.com/in/ryannkim327/)
 
 ---
 
