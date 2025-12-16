@@ -20,7 +20,7 @@ func access(params AccessApi) GistResponseHandler {
 	 * to distribute the data through the other platform connected
 	 * to my domain
 	 */
-	fmt.Println(os.Getenv("GIST_ID"))
+
 	if params.Method == "" {
 		params.Method = "GET"
 	}
@@ -43,9 +43,7 @@ func access(params AccessApi) GistResponseHandler {
 		return GistResponseHandler{Error: err}
 	}
 
-	// body, err := io.ReadAll(resp.Body)
-
-	var data map[string]interface{}
+	var data Gist
 	err = json.NewDecoder(resp.Body).Decode(&data)
 	if err != nil {
 		return GistResponseHandler{Error: err}

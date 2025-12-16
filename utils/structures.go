@@ -14,9 +14,17 @@ type Route struct {
 	Handler gin.HandlerFunc
 }
 
+type GistFile struct {
+	Content string `json:"content"`
+}
+
+type Gist struct {
+	Files map[string]GistFile `json:"files"`
+}
+
 type GistResponseHandler struct {
 	Error    error
-	Response map[string]interface{}
+	Response Gist // map[string]GistFile `json:"files"`
 }
 
 type AccessApi struct {
