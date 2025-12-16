@@ -16,7 +16,7 @@ type Route struct {
 
 type GistResponseHandler struct {
 	Error    error
-	Response []byte
+	Response map[string]interface{}
 }
 
 type AccessApi struct {

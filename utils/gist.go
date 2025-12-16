@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
+
+	"github.com/joho/godotenv"
 )
 
-var URL = fmt.Sprintf("https://api.github.com/gists/%s", os.Getenv("API_KEY"))
+var _ = godotenv.Load()
+
+var URL = fmt.Sprintf("https://api.github.com/gists/%s", os.Getenv("GIST_ID"))
 
 func access(params AccessApi) GistResponseHandler {
 	/*
@@ -17,6 +20,7 @@ func access(params AccessApi) GistResponseHandler {
 	 * to distribute the data through the other platform connected
 	 * to my domain
 	 */
+	fmt.Println(os.Getenv("GIST_ID"))
 	if params.Method == "" {
 		params.Method = "GET"
 	}
@@ -39,22 +43,25 @@ func access(params AccessApi) GistResponseHandler {
 		return GistResponseHandler{Error: err}
 	}
 
-	body, err := io.ReadAll(resp.Body)
+	// body, err := io.ReadAll(resp.Body)
+
+	var data map[string]interface{}
+	err = json.NewDecoder(resp.Body).Decode(&data)
 	if err != nil {
 		return GistResponseHandler{Error: err}
 	}
 
-	return GistResponseHandler{Response: body}
+	return GistResponseHandler{Response: data}
 }
 
-func Get(url string) GistResponseHandler {
+func Get() GistResponseHandler {
 	resp := access(AccessApi{
 		URL: URL,
 	})
 	return resp
 }
 
-func Post(url string, data map[string]string) GistResponseHandler {
+func Post(data map[string]string) GistResponseHandler {
 	jsonBody, _ := json.Marshal(data)
 
 	resp := access(AccessApi{
