@@ -14,7 +14,7 @@ var Index = utils.Route{
 	Path: "/",
 	Handler: func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{
-			"error": "Hello World",
+			"message": "Welcome to my endpoint, please don't break it.",
 		})
 	},
 }

@@ -19,7 +19,7 @@ func GistHandler(file string) gin.H {
 	// TODO: To check if the response is still on
 	if !ok {
 		return gin.H{
-			"error": "Not Found",
+			"error": "Have some bugs",
 		}
 	}
 
