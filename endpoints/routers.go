@@ -7,7 +7,11 @@ import utils "portfolio-backend/utils"
  */
 
 var Routes = []utils.Route{
+	// TODO: GET Requests
 	Index,
 	Projects,
 	Uptime,
+
+	// TODO: POST Requests
+	PostFeedback,
 }
