@@ -127,5 +127,5 @@ func StartServer(port ...int) {
 	})
 
 	fmt.Printf("Running in PORT %d", p)
-	app.Run(fmt.Sprintf("localhost:%d", p))
+	app.Run(fmt.Sprintf(":%d", p))
 }
