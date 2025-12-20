@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -45,7 +47,14 @@ func Register(routes utils.Route) {
 }
 
 func StartServer(port ...int) {
-	p := 8000
+	p := 8080
+
+	if port := os.Getenv("PORT"); port != "" {
+		if v, err := strconv.Atoi(port); err == nil {
+			p = v
+		}
+	}
+
 	if len(port) > 0 {
 		p = port[0]
 	}
@@ -99,5 +108,6 @@ func StartServer(port ...int) {
 		ctx.Data(404, "text/html; charset=utf-8", []byte(html))
 	})
 
+	fmt.Printf("Running in PORT %d", p)
 	app.Run(fmt.Sprintf(":%d", p))
 }
