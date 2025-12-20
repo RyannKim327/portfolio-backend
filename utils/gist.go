@@ -59,13 +59,19 @@ func Get() GistResponseHandler {
 	return resp
 }
 
-func Post(data map[string]string) GistResponseHandler {
-	jsonBody, _ := json.Marshal(data)
+func Post(data interface{}) GistResponseHandler {
+	jsonBody, err := json.Marshal(data)
+	if err != nil {
+		return GistResponseHandler{
+			Error: err,
+		}
+	}
 
 	resp := access(AccessApi{
 		Method: "POST",
 		URL:    URL,
 		Body:   bytes.NewBuffer(jsonBody),
 	})
+
 	return resp
 }

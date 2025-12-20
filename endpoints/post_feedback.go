@@ -7,11 +7,23 @@ import (
 )
 
 var PostFeedback = utils.Route{
-	Path:   "/feedback",
-	Method: "POST",
-	Handler: func(ctx *gin.Context) {
-		ctx.JSON(200, gin.H{
-			"response": "Response",
-		})
-	},
+	Path:    "/feedback",
+	Method:  "GET",
+	Handler: main,
+}
+
+func main(ctx *gin.Context) {
+	gist := utils.GistHandlerList("feedback.json")
+
+	gist = append(gist, gin.H{
+		"user":     "Test",
+		"feedback": "This is a test",
+	})
+
+	response := utils.GistPostHandler("feedback.json", gist)
+
+	ctx.JSON(200, gin.H{
+		"response": response.Response,
+		"error":    response.Error,
+	})
 }

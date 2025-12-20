@@ -7,8 +7,41 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func GistHandlerList(file string) []gin.H {
+	if !strings.Contains(file, ".") || strings.HasSuffix(file, ".") {
+		// TODO: To auto add .json suffix to the file (string)
+		file = file + ".json"
+	}
+
+	gist := Get()
+	response, ok := gist.Response.Files[file]
+
+	// TODO: To check if the response is still on
+	if !ok {
+		return []gin.H{
+			{
+				"error": "Have some bugs",
+			},
+		}
+	}
+
+	// TODO: Interpretation to JSON format
+	var parse []gin.H
+
+	err := json.Unmarshal([]byte(response.Content), &parse)
+	if err != nil {
+		return []gin.H{
+			{
+				"error": err,
+			},
+		}
+	}
+
+	return parse
+}
+
 func GistHandler(file string) gin.H {
-	if !strings.Contains(file, ".") && strings.HasSuffix(file, ".") {
+	if !strings.Contains(file, ".") || strings.HasSuffix(file, ".") {
 		// TODO: To auto add .json suffix to the file (string)
 		file = file + ".json"
 	}
@@ -34,4 +67,24 @@ func GistHandler(file string) gin.H {
 	}
 
 	return parse
+}
+
+func GistPostHandler(file string, data interface{}) GistResponseHandler {
+	if !strings.Contains(file, ".") || strings.HasSuffix(file, ".") {
+		// TODO: To auto add .json suffix to the file (string)
+		file = file + ".json"
+	}
+
+	contentBytes, _ := json.MarshalIndent(data, "", " ")
+
+	data_ := gin.H{
+		"files": gin.H{
+			file: gin.H{
+				"content": string(contentBytes),
+			},
+		},
+	}
+
+	gist := Post(data_)
+	return gist
 }
