@@ -126,6 +126,6 @@ func StartServer(port ...int) {
 		ctx.Data(404, "text/html; charset=utf-8", []byte(html))
 	})
 
-	fmt.Printf("Running in PORT %d", p)
+	fmt.Printf("Running in PORT %d\n\n", p)
 	app.Run(fmt.Sprintf(":%d", p))
 }
