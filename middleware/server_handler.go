@@ -1,9 +1,7 @@
 package middleware
 
 import (
-	"crypto/rand"
 	"fmt"
-	"math/big"
 	"os"
 	"strconv"
 	"strings"
@@ -34,10 +32,10 @@ func getPort(port []int) int {
 	}
 
 	// TODO: Randomized Port
-	fmt.Println("Trying for random Port")
-	if n, err := rand.Int(rand.Reader, big.NewInt(10000)); err == nil {
-		return int(n.Int64()) + 10000
-	}
+	// fmt.Println("Trying for random Port")
+	// if n, err := rand.Int(rand.Reader, big.NewInt(10000)); err == nil {
+	// 	return int(n.Int64()) + 10000
+	// }
 
 	return 8000
 }
@@ -129,5 +127,5 @@ func StartServer(port ...int) {
 	})
 
 	fmt.Printf("Running in PORT %d", p)
-	app.Run(fmt.Sprintf("0.0.0.0:%d", p))
+	app.Run(fmt.Sprintf("localhost:%d", p))
 }
