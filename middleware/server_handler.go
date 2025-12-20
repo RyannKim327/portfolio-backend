@@ -1,7 +1,9 @@
 package middleware
 
 import (
+	"crypto/rand"
 	"fmt"
+	"math/big"
 	"os"
 	"strconv"
 	"strings"
@@ -13,6 +15,34 @@ import (
 )
 
 var app = gin.Default()
+
+// TODO: Private Functions
+func getPort(port []int) int {
+	// TODO: Default
+
+	// TODO: Port from .env
+	fmt.Println("Trying to fetch .env PORT")
+	if port_ := os.Getenv("PORT"); port_ != "" {
+		if v, err := strconv.Atoi(port_); err == nil {
+			return v
+		}
+	}
+
+	fmt.Println("Trying to fetch dev input PORT")
+	if len(port) > 0 {
+		return port[0]
+	}
+
+	// TODO: Randomized Port
+	fmt.Println("Trying for random Port")
+	if n, err := rand.Int(rand.Reader, big.NewInt(10000)); err == nil {
+		return int(n.Int64()) + 10000
+	}
+
+	return 8000
+}
+
+// TODO: Public Functions
 
 func Get(endpoint string, function gin.HandlerFunc) {
 	app.GET(endpoint, function)
@@ -47,17 +77,7 @@ func Register(routes utils.Route) {
 }
 
 func StartServer(port ...int) {
-	p := 8080
-
-	if port := os.Getenv("PORT"); port != "" {
-		if v, err := strconv.Atoi(port); err == nil {
-			p = v
-		}
-	}
-
-	if len(port) > 0 {
-		p = port[0]
-	}
+	p := getPort(port)
 
 	app.Use(func(ctx *gin.Context) {
 		// TODO: To add manual LOGS to monitor by data or file
