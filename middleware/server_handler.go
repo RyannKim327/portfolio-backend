@@ -16,7 +16,7 @@ import (
 var app = gin.Default()
 
 // TODO: CORS Setup
-func CorsSetuo() {
+func CorsSetup() {
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"https://ryannkim327.is-a.dev"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},

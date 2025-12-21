@@ -11,7 +11,8 @@ func main() {
 	 * Everything is set
 	 */
 
-	mw.CorsSetuo()
+	// TODO: Call this first before the registration of each routes
+	mw.CorsSetup()
 
 	for _, routes := range endpoints.Routes {
 		mw.Register(routes)
