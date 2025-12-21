@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -52,17 +53,18 @@ func GistHandler(file string) gin.H {
 	// TODO: To check if the response is still on
 	if !ok {
 		return gin.H{
-			"error": "Have some bugs",
+			"error": "Have Error",
 		}
 	}
 
+	fmt.Println(response.Content)
 	// TODO: Interpretation to JSON format
 	var parse map[string]interface{}
 
 	err := json.Unmarshal([]byte(response.Content), &parse)
 	if err != nil {
 		return gin.H{
-			"error": err,
+			"error": err.Error(),
 		}
 	}
 
