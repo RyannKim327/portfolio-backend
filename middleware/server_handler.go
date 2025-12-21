@@ -9,6 +9,7 @@ import (
 
 	utils "portfolio-backend/utils"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -76,6 +77,15 @@ func Register(routes utils.Route) {
 
 func StartServer(port ...int) {
 	p := getPort(port)
+
+	app.Use(cors.New(cors.Config{
+		AllowAllOrigins:  true,
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	app.Use(func(ctx *gin.Context) {
 		// TODO: To add manual LOGS to monitor by data or file
