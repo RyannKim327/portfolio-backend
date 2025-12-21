@@ -79,8 +79,8 @@ func StartServer(port ...int) {
 	p := getPort(port)
 
 	app.Use(cors.New(cors.Config{
-		AllowAllOrigins: true,
-		// AllowOrigins:    []string{"https://ryannkim327.is-a.dev"},
+		// AllowAllOrigins: true,
+		AllowOrigins: []string{"https://ryannkim327.is-a.dev"},
 		AllowMethods: []string{"GET", "POST", "PUT", "DELETE"},
 		// AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		// ExposeHeaders:    []string{"Content-Length"},
