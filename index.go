@@ -11,6 +11,8 @@ func main() {
 	 * Everything is set
 	 */
 
+	mw.CorsSetuo()
+
 	for _, routes := range endpoints.Routes {
 		mw.Register(routes)
 	}

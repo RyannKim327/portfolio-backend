@@ -9,20 +9,23 @@ import (
 
 	utils "portfolio-backend/utils"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 var app = gin.Default()
 
 // TODO: CORS Setup
-app.Use(cors.New(cors.Config{
-	AllowOrigins:     []string{"https://ryannkim327.is-a.dev"},
-	AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
-	AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-	ExposeHeaders:    []string{"Content-Length"},
-	AllowCredentials: false,
-	MaxAge:           12 * time.Hour,
-}))
+func CorsSetuo() {
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"https://ryannkim327.is-a.dev"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: false,
+		MaxAge:           12 * time.Hour,
+	}))
+}
 
 // TODO: Private Functions
 func getPort(port []int) int {
