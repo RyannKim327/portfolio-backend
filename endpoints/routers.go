@@ -15,5 +15,6 @@ var Routes = []utils.Route{
 	Projects,
 
 	// TODO: POST Requests
+	PostAIAgent,
 	PostFeedback,
 }
