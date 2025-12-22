@@ -3,7 +3,6 @@ package endpoints
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 
@@ -34,8 +33,6 @@ func aiagent(ctx *gin.Context) {
 	}
 
 	message_ := body["message"]
-
-	fmt.Println(message_)
 
 	message, _ := message_.(string)
 
