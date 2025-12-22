@@ -23,9 +23,7 @@ func main(ctx *gin.Context) {
 	}
 
 	gist := utils.GistHandlerList("feedback.json")
-
 	gist = append(gist, body)
-
 	response := utils.GistPostHandler("feedback.json", gist)
 
 	ctx.JSON(200, gin.H{

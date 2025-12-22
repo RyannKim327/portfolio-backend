@@ -10,6 +10,7 @@ var Routes = []utils.Route{
 	// TODO: GET Requests
 	Index,
 	Experiences,
+	Feedback,
 	Poetry,
 	Projects,
 

@@ -6,11 +6,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var Poetry = utils.Route{
-	Path:   "/poetry",
+var Feedback = utils.Route{
+	Path:   "/feedback",
 	Method: "GET",
 	Handler: func(ctx *gin.Context) {
-		data := utils.GistHandlerList("poetry.json")
+		data := utils.GistHandlerList("feedback.json")
 		utils.Reverse(data)
 		ctx.JSON(200, gin.H{
 			"count": len(data),
