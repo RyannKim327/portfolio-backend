@@ -6,6 +6,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var PostFeedback = utils.Route{
+	Path:    "/feedback",
+	Method:  "POST",
+	Handler: feedback,
+}
+
 func feedback(ctx *gin.Context) {
 	var body gin.H
 
@@ -23,10 +29,4 @@ func feedback(ctx *gin.Context) {
 	ctx.JSON(200, gin.H{
 		"from": response,
 	})
-}
-
-var PostFeedback = utils.Route{
-	Path:    "/feedback",
-	Method:  "POST",
-	Handler: feedback,
 }

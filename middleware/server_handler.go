@@ -29,8 +29,6 @@ func CorsSetup() {
 
 // TODO: Private Functions
 func getPort(port []int) int {
-	// TODO: Default
-
 	// TODO: Port from .env
 	fmt.Println("Trying to fetch .env PORT")
 	if port_ := os.Getenv("PORT"); port_ != "" {
@@ -44,53 +42,55 @@ func getPort(port []int) int {
 		return port[0]
 	}
 
-	// TODO: Randomized Port
-	// fmt.Println("Trying for random Port")
-	// if n, err := rand.Int(rand.Reader, big.NewInt(10000)); err == nil {
-	// 	return int(n.Int64()) + 10000
-	// }
-
 	return 8000
 }
 
 // TODO: Public Functions
-
-func Get(endpoint string, function gin.HandlerFunc) {
-	app.GET(endpoint, function)
-}
-
-func Post(endpoint string, function gin.HandlerFunc) {
-	app.POST(endpoint, function)
-}
 
 func Register(routes utils.Route) {
 	/*
 	 * INFO: To register each of endpoint from endpoint package/folder
 	 * The purpose is to make the files cleaner and better looking
 	 */
+
+	// TODO: Make GET Request as default
 	if routes.Method == "" {
 		routes.Method = "GET"
 	}
 
 	// TODO: To make the "Method" case insensitive
-	routes.Method = strings.ToLower(routes.Method)
+	method := strings.ToLower(routes.Method)
 
-	switch routes.Method {
+	// TODO: To make sure that the endpoint is in lowercase
+	routes.Path = strings.ToLower(routes.Path)
+
+	// TODO: To automatically add "/submit" in every required post requests
+	if method == "post" && !strings.HasSuffix(routes.Path, "/submit") {
+
+		// TODO: To prevent double slash in endpoints
+		if !strings.HasSuffix(routes.Path, "/") {
+			routes.Path += "/"
+		}
+
+		routes.Path += "submit"
+	}
+
+	switch method {
 	case "get":
 		app.GET(routes.Path, routes.Handler)
 	case "post":
-		app.POST(routes.Path, routes.Handler)
+		app.POST(routes.Path, PostRequestHandler(), routes.Handler)
 	case "put":
 		app.PUT(routes.Path, routes.Handler)
 	case "delete":
 		app.DELETE(routes.Path, routes.Handler)
+	case "ai":
+		app.POST(routes.Path, routes.Handler)
 	}
 }
 
 func StartServer(port ...int) {
 	p := getPort(port)
-
-	// app.Use(cors.Default())
 
 	app.Use(func(ctx *gin.Context) {
 		// TODO: To add manual LOGS to monitor by data or file

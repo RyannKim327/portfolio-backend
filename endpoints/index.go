@@ -11,7 +11,7 @@ import (
  */
 
 var Index = utils.Route{
-	Path: "/",
+	Path: "",
 	Handler: func(ctx *gin.Context) {
 		ctx.JSON(200, gin.H{
 			"message": "The server is now active",
