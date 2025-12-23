@@ -24,7 +24,7 @@ type Gist struct {
 
 type GistResponseHandler struct {
 	Error    error
-	Response Gist // map[string]GistFile `json:"files"`
+	Response Gist
 }
 
 type AccessApi struct {
