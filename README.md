@@ -38,15 +38,64 @@ All data is managed through **GitHub Gist** as a lightweight, version-controlled
 
 ## 🚀 Live API Endpoints
 
-| Endpoint | Method | Purpose | Description |
-|----------|--------|---------|-------------|
-| `/` | GET | Welcome | API health check and welcome message |
-| `/projects` | GET | Projects Showcase | List of all portfolio projects with details |
-| `/experiences` | GET | Professional Background | Work experience and education history |
-| `/feedback` | GET | Testimonials | User feedback and project testimonials |
-| `/feedback` | POST | Submit Feedback | Allow users to submit feedback for projects |
-| `/poetry` | GET | Creative Work | Personal poetry and creative writing |
-| `/ai-agent` | POST | AI Integration | Smart responses and automated interactions |
+| Endpoint | Method | Purpose | Response Format | Description |
+|----------|--------|---------|-----------------|-------------|
+| `/` | GET | Welcome | `{"message": "The server is now active"}` | API health check and welcome message |
+| `/projects` | GET | Projects Showcase | `[{...}]` | List of all portfolio projects with details |
+| `/experiences` | GET | Professional Background | `[{...}]` | Work experience and education history |
+| `/feedback` | GET | Testimonials | `{"count": number, "data": [{...}]}` | User feedback and project testimonials (reversed order) |
+| `/feedback` | POST | Submit Feedback | `{"from": {...}}` | Allow users to submit feedback for projects |
+| `/poetry` | GET | Creative Work | `{"count": number, "data": [{...}]}` | Personal poetry and creative writing (reversed order) |
+| `/ai/chat` | POST | AI Integration | `{"role": "assistant", "content": "..."}` | Smart responses and automated interactions |
+
+### Request/Response Examples
+
+#### GET Endpoints
+All GET endpoints return JSON data directly or in a structured format with count and data fields.
+
+#### POST /feedback
+**Request Body:**
+```json
+{
+  "project": "My Awesome App",
+  "rating": 5,
+  "comment": "Great application!",
+  "user": "John Doe"
+}
+```
+
+**Response:**
+```json
+{
+  "from": {
+    "project": "My Awesome App",
+    "rating": 5,
+    "comment": "Great application!",
+    "user": "John Doe"
+  }
+}
+```
+
+#### POST /ai/chat
+**Request Body:**
+```json
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "Hello, how are you?"
+    }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "role": "assistant",
+  "content": "Hello! I'm doing well, thank you for asking. How can I help you today?"
+}
+```
 
 ## 💡 How It Works
 
@@ -67,13 +116,19 @@ flowchart TD
     K[Users/Visitors] --> L[Submit Feedback]
     L --> B
     B --> F
+    
+    M[AI Chat Requests] --> B
+    B --> N[Pollinations AI API]
+    N --> B
 ```
 
 ## 🛠️ Tech Stack
 
-- **Backend**: Go 1.25+ with Gin Framework
+- **Backend**: Go 1.21+ with Gin Framework
 - **Data Storage**: GitHub Gist API (JSON files)
 - **Development**: Air (Hot reload)
+- **AI Integration**: Pollinations AI API
+- **CORS**: Configured for cross-origin requests
 - **Deployment**: Lightweight, containerizable
 - **Authentication**: GitHub Personal Access Token
 
@@ -82,6 +137,7 @@ flowchart TD
 ```
 portfolio-backend/
 ├── endpoints/              # API route handlers
+│   ├── index.go           # Welcome endpoint
 │   ├── projects.go        # Projects showcase endpoint
 │   ├── feedback.go        # Feedback retrieval
 │   ├── post_feedback.go   # Feedback submission
@@ -90,15 +146,22 @@ portfolio-backend/
 │   ├── ai_agent.go        # AI integration
 │   └── routers.go         # Route registration
 ├── middleware/            # Server setup and CORS
+│   └── server_handler.go  # Server configuration and middleware
 ├── utils/                 # GitHub Gist integration & utilities
+│   ├── gist.go           # Gist API handlers
+│   ├── gist_handler.go   # Gist data processing
+│   ├── structures.go     # Data structures
+│   └── tools.go          # Utility functions
 ├── .env                   # Environment configuration
+├── .air.toml             # Hot reload configuration
+├── go.mod                # Go module dependencies
 └── index.go              # Application entry point
 ```
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Go 1.25+
+- Go 1.21+
 - GitHub Personal Access Token (with Gist permissions)
 
 ### Setup
@@ -117,6 +180,7 @@ portfolio-backend/
    ```bash
    # Create .env file
    echo "API_KEY=your_github_personal_access_token" > .env
+   echo "PORT=8000" >> .env  # Optional: specify custom port
    ```
 
 4. **Run the server**
@@ -149,6 +213,20 @@ await fetch('http://localhost:8000/feedback', {
     user: 'John Doe'
   })
 });
+
+// Chat with AI agent
+const aiResponse = await fetch('http://localhost:8000/ai/chat', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    messages: [
+      {
+        role: 'user',
+        content: 'Tell me about this portfolio'
+      }
+    ]
+  })
+}).then(res => res.json());
 ```
 
 ### Mobile App Integration
@@ -157,6 +235,16 @@ await fetch('http://localhost:8000/feedback', {
 Future<List<dynamic>> fetchProjects() async {
   final response = await http.get(
     Uri.parse('http://localhost:8000/projects')
+  );
+  return json.decode(response.body);
+}
+
+// Submit feedback from mobile app
+Future<Map<String, dynamic>> submitFeedback(Map<String, dynamic> feedback) async {
+  final response = await http.post(
+    Uri.parse('http://localhost:8000/feedback'),
+    headers: {'Content-Type': 'application/json'},
+    body: json.encode(feedback),
   );
   return json.decode(response.body);
 }
@@ -169,6 +257,16 @@ This backend enables:
 - **Testimonial management** for portfolio credibility
 - **Project-specific reviews** to showcase user satisfaction
 - **Automated feedback aggregation** for portfolio statistics
+- **Chronological ordering** with newest feedback first
+
+## 🤖 AI Integration
+
+The AI agent endpoint (`/ai/chat`) provides:
+- **Conversational AI** powered by Pollinations AI
+- **Markdown support** for rich text responses
+- **Context-aware responses** with conversation history
+- **Temperature-controlled** responses for consistency
+- **Error handling** for robust API interactions
 
 ## 🌟 Why This Architecture?
 
@@ -178,13 +276,16 @@ This backend enables:
 4. **Version Controlled**: All data changes are tracked
 5. **Cost Effective**: No database hosting costs
 6. **Developer Friendly**: Simple JSON-based data management
+7. **AI-Enhanced**: Built-in conversational capabilities
 
 ## 🔒 Security & Configuration
 
-- Environment-based API key management
-- CORS enabled for cross-origin requests
-- Input validation for all POST endpoints
-- Rate limiting ready for production deployment
+- **Environment-based API key management** for GitHub Gist access
+- **CORS enabled** for cross-origin requests from `https://ryannkim327.is-a.dev`
+- **Input validation** for all POST endpoints
+- **Error handling** with appropriate HTTP status codes
+- **Request logging** with timestamps and status codes
+- **Custom 404 page** for undefined routes
 
 ## 📈 Future Enhancements
 
@@ -194,6 +295,17 @@ This backend enables:
 - [ ] Integration with more portfolio platforms
 - [ ] Automated testimonial verification
 - [ ] Multi-language support for global reach
+- [ ] Rate limiting for production deployment
+- [ ] Database migration from Gist to proper database
+- [ ] Authentication system for admin features
+- [ ] Webhook support for real-time updates
+
+## 🐛 Error Handling
+
+The API includes comprehensive error handling:
+- **400 Bad Request**: Invalid JSON or missing required fields
+- **404 Not Found**: Custom HTML page for undefined routes
+- **500 Internal Server Error**: Server-side errors with descriptive messages
 
 ## 📞 Contact & Feedback
 
