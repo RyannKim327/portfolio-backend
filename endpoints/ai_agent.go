@@ -13,7 +13,7 @@ import (
 
 var PostAIAgent = utils.Route{
 	Path:    "/ai/chat",
-	Method:  "POST",
+	Method:  "ai",
 	Handler: aiagent,
 }
 

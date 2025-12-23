@@ -14,8 +14,10 @@ var Routes = []utils.Route{
 	GetPoetry,
 	GetProjects,
 
+	// TODO: Created AI Endpoint
+	// PostAIAgent,
+
 	// TODO: POST Requests
-	PostAIAgent,
 	PostFeedback,
 	PostPoetry,
 }
