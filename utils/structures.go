@@ -32,3 +32,12 @@ type AccessApi struct {
 	URL    string
 	Body   io.Reader
 }
+
+type GPTMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
+type BodyAIStructure struct {
+	Messages []GPTMessage `json:"messages"`
+}

@@ -3,7 +3,6 @@ package endpoints
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 
@@ -18,17 +17,8 @@ var PostAIAgent = utils.Route{
 	Handler: aiagent,
 }
 
-type gptMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
-type bodyStruc struct {
-	Messages []gptMessage `json:"messages"`
-}
-
 func aiagent(ctx *gin.Context) {
-	var body bodyStruc
+	var body utils.BodyAIStructure
 
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.JSON(400, gin.H{
@@ -36,19 +26,21 @@ func aiagent(ctx *gin.Context) {
 		})
 		return
 	}
-	msgs := []gptMessage{}
+	msgs := []utils.GPTMessage{}
 
+	// TODO: To add default formatting for AI Responses
 	if len(msgs) <= 0 {
-		msgs = append(msgs, gptMessage{
+		msgs = append(msgs, utils.GPTMessage{
 			Role:    "user",
 			Content: "You are capable to use markdown. Just response in very detailed but readable.",
 		})
-		msgs = append(msgs, gptMessage{
+		msgs = append(msgs, utils.GPTMessage{
 			Role:    "assistant",
 			Content: "Okay. I will, now what's on your mind?",
 		})
 	}
 
+	// TODO: Basically to append two lists
 	msgs = append(msgs, body.Messages...)
 
 	reqBody, _ := json.Marshal(map[string]any{
@@ -58,8 +50,6 @@ func aiagent(ctx *gin.Context) {
 		"max_tokens":  1000,
 		"stream":      false,
 	})
-
-	fmt.Println(bytes.NewBuffer(reqBody))
 
 	// TODO: To Fetch data thru API
 	req, _ := http.NewRequest("POST", "https://text.pollinations.ai/openai", bytes.NewBuffer(reqBody))
