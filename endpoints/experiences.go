@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var Experiences = utils.Route{
+var GetExperiences = utils.Route{
 	Path:   "/experiences",
 	Method: "GET",
 	Handler: func(ctx *gin.Context) {

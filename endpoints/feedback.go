@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var Feedback = utils.Route{
+var GetFeedback = utils.Route{
 	Path:   "/feedback",
 	Method: "GET",
 	Handler: func(ctx *gin.Context) {

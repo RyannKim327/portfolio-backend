@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var Projects = utils.Route{
+var GetProjects = utils.Route{
 	Path:   "/projects",
 	Method: "GET",
 	Handler: func(ctx *gin.Context) {
