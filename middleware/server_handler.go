@@ -79,31 +79,31 @@ func Register(routes utils.Route) {
 	case "get":
 		app.GET(routes.Path, routes.Handler)
 	case "post":
-		app.POST(routes.Path, routes.Handler)
+		app.POST(routes.Path, PostRequestHandler(), routes.Handler)
 	case "put":
 		app.PUT(routes.Path, routes.Handler)
 	case "delete":
 		app.DELETE(routes.Path, routes.Handler)
-		// case "ai":
-		// 	app.POST(routes.Path, routes.Handler)
+	case "ai":
+		app.POST(routes.Path, routes.Handler)
 	}
 }
 
 func StartServer(port ...int) {
 	p := getPort(port)
 
-	// app.Use(func(ctx *gin.Context) {
-	// 	// TODO: To add manual LOGS to monitor by data or file
-	//
-	// 	path := ctx.Request.URL.Path
-	// 	method := ctx.Request.Method
-	//
-	// 	ctx.Next()
-	//
-	// 	status := ctx.Writer.Status()
-	// 	// INFO: According to ChatGPT: Go’s time formatting uses a reference date instead of formatting codes (like YYYY or MM)
-	// 	fmt.Printf("[%s] [%s] %s -> %d\n", time.Now().Format("2006-01-02 15:04:05"), method, path, status)
-	// })
+	app.Use(func(ctx *gin.Context) {
+		// TODO: To add manual LOGS to monitor by data or file
+
+		path := ctx.Request.URL.Path
+		method := ctx.Request.Method
+
+		ctx.Next()
+
+		status := ctx.Writer.Status()
+		// INFO: According to ChatGPT: Go’s time formatting uses a reference date instead of formatting codes (like YYYY or MM)
+		fmt.Printf("[%s] [%s] %s -> %d\n", time.Now().Format("2006-01-02 15:04:05"), method, path, status)
+	})
 
 	app.NoRoute(func(ctx *gin.Context) {
 		const html = `
