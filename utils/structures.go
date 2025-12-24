@@ -41,3 +41,5 @@ type GPTMessage struct {
 type BodyAIStructure struct {
 	Messages []GPTMessage `json:"messages"`
 }
+
+type BaybayinCharacters = map[string]int
