@@ -25,6 +25,9 @@ func CorsSetup() {
 		AllowCredentials: false,
 		MaxAge:           12 * time.Hour,
 	}))
+
+	// TODO: To setup Headers
+	app.Use(ResponseHeaderMiddleware())
 }
 
 // TODO: Private Functions
@@ -97,6 +100,8 @@ func StartServer(port ...int) {
 
 		path := ctx.Request.URL.Path
 		method := ctx.Request.Method
+
+		// TODO: Header setter
 
 		ctx.Next()
 

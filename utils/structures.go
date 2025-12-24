@@ -27,7 +27,7 @@ type GistResponseHandler struct {
 	Response Gist
 }
 
-type AccessApi struct {
+type AccessAPI struct {
 	Method string
 	URL    string
 	Body   io.Reader

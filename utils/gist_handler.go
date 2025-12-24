@@ -2,7 +2,6 @@ package utils
 
 import (
 	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -57,7 +56,6 @@ func GistHandler(file string) gin.H {
 		}
 	}
 
-	fmt.Println(response.Content)
 	// TODO: Interpretation to JSON format
 	var parse map[string]interface{}
 
@@ -77,7 +75,12 @@ func GistPostHandler(file string, data interface{}) GistResponseHandler {
 		file = file + ".json"
 	}
 
-	contentBytes, _ := json.MarshalIndent(data, "", " ")
+	contentBytes, err := json.MarshalIndent(data, "", " ")
+	if err != nil {
+		return GistResponseHandler{
+			Error: err,
+		}
+	}
 
 	data_ := gin.H{
 		"files": gin.H{
