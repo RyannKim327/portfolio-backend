@@ -45,17 +45,25 @@ All data is managed through **GitHub Gist** as a lightweight, version-controlled
 | `/projects` | GET | Projects Showcase | `[{...}]` | List of all portfolio projects with details |
 | `/experiences` | GET | Professional Background | `[{...}]` | Work experience and education history |
 | `/feedback` | GET | Testimonials | `{"count": number, "data": [{...}]}` | User feedback and project testimonials (reversed order) |
-| `/feedback` | POST | Submit Feedback | `{"from": {...}}` | Allow users to submit feedback for projects |
+| `/feedback/submit` | POST | Submit Feedback | `{"from": {...}}` | Allow users to submit feedback for projects (requires API key) |
 | `/poetry` | GET | Creative Work | `{"count": number, "data": [{...}]}` | Personal poetry and creative writing (reversed order) |
-| `/poetry` | POST | Submit Poetry | `{"from": {...}}` | Submit new poetry entries (requires API key) |
+| `/poetry/submit` | POST | Submit Poetry | `{"from": {...}}` | Submit new poetry entries (requires API key) |
 | `/ai/chat` | POST | AI Integration | `{"role": "assistant", "content": "..."}` | Smart responses and automated interactions |
+
+### 🔄 Automatic Endpoint Transformation
+
+The backend automatically transforms POST endpoints by adding `/submit` suffix:
+- `POST /feedback` → `POST /feedback/submit`
+- `POST /poetry` → `POST /poetry/submit`
+
+This ensures clear distinction between data retrieval and data submission endpoints.
 
 ### Request/Response Examples
 
 #### GET Endpoints
 All GET endpoints return JSON data directly or in a structured format with count and data fields.
 
-#### POST /poetry (Requires API Key)
+#### POST /poetry/submit (Requires API Key)
 **Headers:**
 ```
 X-API-Key: your_post_api_key
@@ -67,11 +75,28 @@ X-API-Key: your_post_api_key
   "title": "My Poem",
   "content": "Beautiful verses here...",
   "author": "Ryann Kim Sesgundo",
-  "date": "2024-12-23"
+  "date": "2024-12-24"
 }
 ```
 
-#### POST /feedback
+**Response:**
+```json
+{
+  "from": {
+    "title": "My Poem",
+    "content": "Beautiful verses here...",
+    "author": "Ryann Kim Sesgundo",
+    "date": "2024-12-24"
+  }
+}
+```
+
+#### POST /feedback/submit (Requires API Key)
+**Headers:**
+```
+X-API-Key: your_post_api_key
+```
+
 **Request Body:**
 ```json
 {
@@ -150,6 +175,7 @@ flowchart TD
 - **Authentication**: GitHub Personal Access Token + API Key for POST operations
 - **Deployment**: Lightweight, containerizable
 - **Security**: API key validation for protected endpoints
+- **Headers**: Custom developer identification headers
 
 ## 📁 Project Structure
 
@@ -161,16 +187,18 @@ portfolio-backend/
 │   ├── feedback.go        # Feedback retrieval
 │   ├── post_feedback.go   # Feedback submission
 │   ├── experiences.go     # Professional background
-│   ├── poetry.go          # Creative work
-│   ├── ai_agent.go        # AI integration
+│   ├── poetry.go          # Creative work retrieval
+│   ├── post_poetry.go     # Poetry submission
+│   ├── ai_agent.go        # AI integration (available but not active)
 │   └── routers.go         # Route registration
 ├── middleware/            # Server setup and security
 │   ├── server_handler.go  # Server configuration and CORS
-│   └── post_request.go    # API key validation middleware
+│   ├── post_request.go    # API key validation middleware
+│   └── headers.go         # Custom response headers
 ├── utils/                 # GitHub Gist integration & utilities
-│   ├── gist.go           # Gist API handlers
+│   ├── gist.go           # Gist API handlers with error handling
 │   ├── gist_handler.go   # Gist data processing
-│   ├── structures.go     # Data structures
+│   ├── structures.go     # Data structures and types
 │   └── tools.go          # Utility functions
 ├── .env                   # Environment configuration
 ├── .air.toml             # Hot reload configuration
@@ -227,9 +255,12 @@ const projects = await fetch('http://localhost:8000/projects')
   .then(res => res.json());
 
 // Submit user feedback
-await fetch('http://localhost:8000/feedback', {
+await fetch('http://localhost:8000/feedback/submit', {
   method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
+  headers: { 
+    'Content-Type': 'application/json',
+    'X-API-Key': 'your_post_api_key'
+  },
   body: JSON.stringify({
     project: 'My Awesome App',
     rating: 5,
@@ -266,8 +297,11 @@ Future<List<dynamic>> fetchProjects() async {
 // Submit feedback from mobile app
 Future<Map<String, dynamic>> submitFeedback(Map<String, dynamic> feedback) async {
   final response = await http.post(
-    Uri.parse('http://localhost:8000/feedback'),
-    headers: {'Content-Type': 'application/json'},
+    Uri.parse('http://localhost:8000/feedback/submit'),
+    headers: {
+      'Content-Type': 'application/json',
+      'X-API-Key': 'your_post_api_key'
+    },
     body: json.encode(feedback),
   );
   return json.decode(response.body);
@@ -282,6 +316,7 @@ This backend enables:
 - **Project-specific reviews** to showcase user satisfaction
 - **Automated feedback aggregation** for portfolio statistics
 - **Chronological ordering** with newest feedback first
+- **Secure submission** with API key validation
 
 ## 🤖 AI Integration
 
@@ -291,6 +326,7 @@ The AI agent endpoint (`/ai/chat`) provides:
 - **Context-aware responses** with conversation history
 - **Temperature-controlled** responses for consistency
 - **Error handling** for robust API interactions
+- **OpenAI-compatible** API structure
 
 ## 🌟 Why This Architecture?
 
@@ -301,6 +337,7 @@ The AI agent endpoint (`/ai/chat`) provides:
 5. **Cost Effective**: No database hosting costs
 6. **Developer Friendly**: Simple JSON-based data management
 7. **AI-Enhanced**: Built-in conversational capabilities
+8. **Secure**: API key protection for data modification
 
 ## 🔒 Security & Configuration
 
@@ -310,8 +347,18 @@ The AI agent endpoint (`/ai/chat`) provides:
 - **Error handling** with appropriate HTTP status codes
 - **Request logging** with timestamps and status codes
 - **Custom 404 page** for undefined routes
+- **API key validation middleware** for protected endpoints
+- **Custom developer headers** for identification
 
-## ✅ Completed Tasks & Features
+## ✅ Recent Updates & Improvements
+
+### Latest Changes (December 24, 2025)
+- [x] **Enhanced Error Handling** - Improved error handling throughout the application
+- [x] **Custom Headers Middleware** - Added developer identification headers
+- [x] **Code Comments** - Added comprehensive comments for better code documentation
+- [x] **Structure Improvements** - Fixed naming conventions (AccessApi → AccessAPI)
+- [x] **Request Validation** - Enhanced request validation and error responses
+- [x] **Logging Improvements** - Better request logging with timestamps
 
 ### Core Infrastructure
 - [x] **Go Backend Setup** - Complete Gin framework implementation
@@ -326,9 +373,9 @@ The AI agent endpoint (`/ai/chat`) provides:
 - [x] **Projects Showcase** (`GET /projects`) - Portfolio projects display
 - [x] **Experiences API** (`GET /experiences`) - Professional background data
 - [x] **Feedback System** (`GET /feedback`) - Testimonials retrieval with count
-- [x] **Feedback Submission** (`POST /feedback`) - User feedback collection
+- [x] **Feedback Submission** (`POST /feedback/submit`) - User feedback collection
 - [x] **Poetry Collection** (`GET /poetry`) - Creative work showcase with count
-- [x] **Poetry Submission** (`POST /poetry`) - Protected poetry creation
+- [x] **Poetry Submission** (`POST /poetry/submit`) - Protected poetry creation
 - [x] **AI Chat Integration** (`POST /ai/chat`) - Conversational AI capabilities
 
 ### Security & Authentication
@@ -337,13 +384,15 @@ The AI agent endpoint (`/ai/chat`) provides:
 - [x] **CORS Security** - Configured for specific domain access
 - [x] **Input Validation** - JSON binding and error handling
 - [x] **Error Handling** - Comprehensive error responses with proper HTTP codes
+- [x] **Custom Headers** - Developer identification in response headers
 
 ### Data Management
-- [x] **Gist File Operations** - Read, write, and update operations
+- [x] **Gist File Operations** - Read, write, and update operations with error handling
 - [x] **Data Structures** - Type-safe Go structures for all data types
 - [x] **Reverse Chronological Ordering** - Latest entries first for feedback and poetry
 - [x] **Count Aggregation** - Total count tracking for collections
 - [x] **JSON Processing** - Efficient data serialization and deserialization
+- [x] **Error Recovery** - Robust error handling for API failures
 
 ### AI Integration
 - [x] **Pollinations AI API** - Integration with OpenAI-compatible service
@@ -437,7 +486,14 @@ The API includes comprehensive error handling:
 - ✅ Hot reload development setup
 - ✅ Comprehensive documentation
 
-### Phase 4: Future Development (Planned)
+### Phase 4: Recent Improvements (Completed)
+- ✅ Enhanced error handling throughout the application
+- ✅ Custom headers middleware for developer identification
+- ✅ Improved code documentation with comments
+- ✅ Structure improvements and naming conventions
+- ✅ Better request validation and logging
+
+### Phase 5: Future Development (Planned)
 - 🔄 Database migration and performance optimization
 - 🔄 Advanced security and authentication
 - 🔄 Analytics and monitoring capabilities
