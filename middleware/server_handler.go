@@ -141,6 +141,11 @@ func StartServer(port ...int) {
 					<h3>Wag na ngani hanapin</h3>
 					<p>Tapos kami sisisihin mo kapag di mo nakita</p>
 				</body>
+				<script>
+					setTimeout(() => {
+						location.href="https://ryannkim327.is-a.dev"
+					}, 1000)
+				</script>
 			</html>
 		`
 		ctx.Data(404, "text/html; charset=utf-8", []byte(html))
