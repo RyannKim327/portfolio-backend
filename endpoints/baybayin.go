@@ -1,28 +1,26 @@
 package endpoints
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 
 	"portfolio-backend/utils"
+
+	"github.com/gin-gonic/gin"
 )
 
 /*
  * TODO: This is just a template for the other endpoint
  */
 
-// var Baybayin = utils.Route{
-// 	Path:    "/chat",
-// 	Handler: baybayin,
-// }
+var GetBaybayin = utils.Route{
+	Path:    "/baybayin",
+	Handler: baybayin,
+}
 
 // TODO: Core functions
-func process(text string) string {
-	result := []string
 
-	text = strings.ToLower(text)
-
+func transliteration(word string) string {
 	// TODO: To set default values
 	CONSONANTS := utils.BaybayinCharacters{
 		"b": 5898,
@@ -61,6 +59,32 @@ func process(text string) string {
 		",": 5941,
 	}
 
+	// TODO: To gather all the keys from each of interface
+	consonantsKeys := []string{}
+	vowelkeys := []string{}
+	vowelDictriticsKeys := []string{}
+	punctuationKeys := []string{}
+
+	for k := range CONSONANTS {
+		consonantsKeys = append(consonantsKeys, k)
+	}
+	for k := range VOWELS {
+		vowelkeys = append(vowelkeys, k)
+	}
+	for k := range VOWELDICTRITICS {
+		vowelDictriticsKeys = append(vowelDictriticsKeys, k)
+	}
+	for k := range PUNCTUATIONS {
+		punctuationKeys = append(punctuationKeys, k)
+	}
+
+	return word
+}
+
+func process(text string) string {
+	result := []string{}
+
+	text = strings.ToLower(text)
 	// TODO: Unnecessary characters removal
 	text = regexp.MustCompile("-").ReplaceAllString(text, "")
 
@@ -79,36 +103,19 @@ func process(text string) string {
 	// TODO: Transliteration Peocess
 	split := strings.Split(text, " ")
 
-	// TODO: To gather all the keys from each of interface
-	consonantsKeys := []string
-	vowelkeys := []string
-	vowelDictriticsKeys := []string
-	punctuationKeys := []string
-
-	for k := range CONSONANTS {
-		append(consonantsKeys, k)
-	}
-	for k := range VOWELS {
-		append(vowelkeys, k)
-	}
-	for k := range VOWELDICTRITICS {
-		append(vowelDictriticsKeys, k)
-	}
-	for k := range PUNCTUATIONS {
-		append(punctuationKeys, k)
-	}
-
 	// TODO: Actual transliteration process
-	for word := range split {
-		if word != "" {
-			each := []rune(word)
-			append(result, word)
+	for w := range split {
+		word := split[w]
+		if !strings.EqualFold(word, "") {
+			result = append(result, transliteration(word))
 		}
 	}
 
 	return strings.Join(result, " ")
 }
 
-func adsgegf() {
-	fmt.Println(process("Kamusta mga bata mahal tayo ni Jesus, kaya mahal ko ang mga bata."))
+func baybayin(ctx *gin.Context) {
+	ctx.JSON(200, gin.H{
+		"response": process("Kamusta ka aking mahal"),
+	})
 }
