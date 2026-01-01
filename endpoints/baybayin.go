@@ -113,11 +113,6 @@ func transliteration(word string) string {
 	return ""
 }
 
-// TODO: Regex string normalization
-func normalize(source string, regex string, tc string) string {
-	return regexp.MustCompile(regex).ReplaceAllString(source, tc)
-}
-
 // TODO: Process for making string as readable by the transliterator
 func process(text string) string {
 	result := []string{}
@@ -128,7 +123,7 @@ func process(text string) string {
 	text = regexp.MustCompile("-").ReplaceAllString(text, "")
 
 	// TODO: String normalization
-	text = normalize(text, `i`, "e") // regexp.MustCompile(`i`).ReplaceAllString(text, "e")
+	text = regexp.MustCompile(`i`).ReplaceAllString(text, "e")
 	text = regexp.MustCompile(`u`).ReplaceAllString(text, "o")
 	text = regexp.MustCompile(`r`).ReplaceAllString(text, "d")
 	text = regexp.MustCompile(`\bmga\b`).ReplaceAllString(text, "manga")
