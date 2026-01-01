@@ -68,14 +68,21 @@ func transliteration(word string) string {
 				if strings.EqualFold(c, "n") && strings.EqualFold(next, "g") {
 					result.WriteRune(rune(NG))
 					i += 2
-					// if !strings.EqualFold(string(characters[i+2]), "a") {
-					// 	result.WriteRune(rune(VOWELDICTRITICS["default"]))
-					// }
 					continue
 				}
 			}
 
-			result.WriteRune(rune(code))
+			// TODO: Removal of H with virama
+			if strings.EqualFold(c, "h") {
+				if next != "" {
+					result.WriteRune(rune(code))
+				}
+				if next == "" {
+					continue
+				}
+			} else {
+				result.WriteRune(rune(code))
+			}
 
 			// TODO: Vowel diacritics
 			if v, ok := VOWELDICTRITICS[next]; ok {
@@ -100,7 +107,15 @@ func transliteration(word string) string {
 		}
 	}
 
-	return result.String()
+	if len(result.String()) > 0 {
+		return result.String()
+	}
+	return ""
+}
+
+// TODO: Regex string normalization
+func normalize(source string, regex string, tc string) string {
+	return regexp.MustCompile(regex).ReplaceAllString(source, tc)
 }
 
 // TODO: Process for making string as readable by the transliterator
@@ -113,7 +128,7 @@ func process(text string) string {
 	text = regexp.MustCompile("-").ReplaceAllString(text, "")
 
 	// TODO: String normalization
-	text = regexp.MustCompile(`i`).ReplaceAllString(text, "e")
+	text = normalize(text, `i`, "e") // regexp.MustCompile(`i`).ReplaceAllString(text, "e")
 	text = regexp.MustCompile(`u`).ReplaceAllString(text, "o")
 	text = regexp.MustCompile(`r`).ReplaceAllString(text, "d")
 	text = regexp.MustCompile(`\bmga\b`).ReplaceAllString(text, "manga")
@@ -131,7 +146,10 @@ func process(text string) string {
 	for w := range split {
 		word := split[w]
 		if !strings.EqualFold(word, "") {
-			result = append(result, transliteration(word))
+			baybay := transliteration(word)
+			if baybay != "" {
+				result = append(result, baybay)
+			}
 		}
 	}
 
