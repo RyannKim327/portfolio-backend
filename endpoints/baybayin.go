@@ -19,32 +19,23 @@ var GetBaybayin = utils.Route{
 }
 
 // TODO: Core functions
-
 func transliteration(word string) string {
-	// TODO: To set default values
+	var result strings.Builder
+
 	CONSONANTS := utils.BaybayinCharacters{
-		"b": 5898,
-		"k": 5891,
-		"d": 5895,
-		"g": 5892,
-		"h": 5905,
-		"l": 5902,
-		"m": 5899,
-		"n": 5896,
-		"p": 5897,
-		"s": 5904,
-		"t": 5894,
-		"w": 5903,
-		"y": 5900,
+		"b": 5898, "k": 5891, "d": 5895, "g": 5892,
+		"h": 5905, "l": 5902, "m": 5899, "n": 5896,
+		"p": 5897, "s": 5904, "t": 5894,
+		"w": 5903, "y": 5900,
+	}
+
+	VOWELS := utils.BaybayinCharacters{
+		"a": 5888,
+		"e": 5889,
+		"o": 5890,
 	}
 
 	NG := 5893
-
-	VOWELS := utils.BaybayinCharacters{
-		"a": 5906,
-		"e": 5907,
-		"o": 5908,
-	}
 
 	VOWELDICTRITICS := utils.BaybayinCharacters{
 		"e":       5906,
@@ -59,32 +50,65 @@ func transliteration(word string) string {
 		",": 5941,
 	}
 
-	// TODO: To gather all the keys from each of interface
-	consonantsKeys := []string{}
-	vowelkeys := []string{}
-	vowelDictriticsKeys := []string{}
-	punctuationKeys := []string{}
+	characters := []rune(word)
 
-	for k := range CONSONANTS {
-		consonantsKeys = append(consonantsKeys, k)
-	}
-	for k := range VOWELS {
-		vowelkeys = append(vowelkeys, k)
-	}
-	for k := range VOWELDICTRITICS {
-		vowelDictriticsKeys = append(vowelDictriticsKeys, k)
-	}
-	for k := range PUNCTUATIONS {
-		punctuationKeys = append(punctuationKeys, k)
+	for i := 0; i < len(characters); i++ {
+		c := string(characters[i])
+
+		// TODO: CONSONANT CHECK (equivalent to Set.has)
+		if code, ok := CONSONANTS[c]; ok {
+			next := ""
+
+			if i+1 < len(characters) {
+				next = string(characters[i+1])
+			}
+
+			// TODO: NG to NANG
+			if i+1 < len(characters) {
+				if strings.EqualFold(c, "n") && strings.EqualFold(next, "g") {
+					result.WriteRune(rune(NG))
+					i += 2
+					// if !strings.EqualFold(string(characters[i+2]), "a") {
+					// 	result.WriteRune(rune(VOWELDICTRITICS["default"]))
+					// }
+					continue
+				}
+			}
+
+			result.WriteRune(rune(code))
+
+			// TODO: Vowel diacritics
+			if v, ok := VOWELDICTRITICS[next]; ok {
+				result.WriteRune(rune(v))
+				i++
+			} else if !strings.EqualFold(next, "a") {
+				result.WriteRune(rune(VOWELDICTRITICS["default"]))
+			} else {
+				i++
+			}
+			continue
+
+		} else if code, ok := VOWELS[c]; ok {
+			result.WriteRune(rune(code))
+			continue
+		}
+
+		// TODO: PUNCTUATIONS
+		if code, ok := PUNCTUATIONS[c]; ok {
+			result.WriteRune(rune(code))
+			continue
+		}
 	}
 
-	return word
+	return result.String()
 }
 
+// TODO: Process for making string as readable by the transliterator
 func process(text string) string {
 	result := []string{}
 
 	text = strings.ToLower(text)
+
 	// TODO: Unnecessary characters removal
 	text = regexp.MustCompile("-").ReplaceAllString(text, "")
 
@@ -115,7 +139,14 @@ func process(text string) string {
 }
 
 func baybayin(ctx *gin.Context) {
-	ctx.JSON(200, gin.H{
-		"response": process("Kamusta ka aking mahal"),
+	if ctx.Query("text") != "" {
+		ctx.JSON(200, gin.H{
+			"original": ctx.Query("text"),
+			"response": process(ctx.Query("text")),
+		})
+		return
+	}
+	ctx.JSON(403, gin.H{
+		"error": "Required parameter \"text\"",
 	})
 }
