@@ -191,10 +191,15 @@ flowchart TD
     F --> H[Experiences]
     F --> I[Feedback/Testimonials]
     F --> J[Poetry/Creative Work]
-    
+
+    G --> F
+    H --> F
+    I --> F
+    J --> F
+
     K[Users/Visitors] --> L[Submit Feedback]
     L --> B
-    B --> F
+    F --> B
     
     M[AI Chat Requests] --> B
     B --> N[Pollinations AI API]
