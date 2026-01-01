@@ -9,13 +9,14 @@ import utils "portfolio-backend/utils"
 var Routes = []utils.Route{
 	// TODO: GET Requests
 	Index,
+	GetBaybayin,
 	GetExperiences,
 	GetFeedback,
 	GetPoetry,
 	GetProjects,
 
 	// TODO: Created AI Endpoint
-	// PostAIAgent,
+	PostAIAgent,
 
 	// TODO: POST Requests
 	PostFeedback,

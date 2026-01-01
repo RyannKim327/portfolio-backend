@@ -15,6 +15,7 @@ This repository serves as the **central nervous system** for my portfolio ecosys
 - **📊 Portfolio Data Management**: Serves project information, experiences, and achievements
 - **🌐 Unified API Gateway**: Provides consistent endpoints for all portfolio-related data
 - **🤖 AI-Powered Interactions**: Intelligent conversational capabilities for enhanced user experience
+- **🏛️ Cultural Heritage**: Baybayin transliteration service for Filipino cultural preservation
 
 ## 🏗️ What This Backend Powers
 
@@ -35,7 +36,8 @@ All data is managed through **GitHub Gist** as a lightweight, version-controlled
 - **Experiences** (`/experiences`) - Professional and educational background
 - **Feedback & Testimonials** (`/feedback`) - User reviews and project testimonials
 - **Poetry & Creative Work** (`/poetry`) - Creative writing and artistic expressions
-- **AI Agent Integration** - Smart responses and automated interactions
+- **Baybayin Transliteration** (`/baybayin`) - Filipino to ancient Baybayin script conversion
+- **🤖 AI Agent Integration** - Smart responses and automated interactions (enabled)
 
 ## 🚀 Live API Endpoints
 
@@ -48,7 +50,8 @@ All data is managed through **GitHub Gist** as a lightweight, version-controlled
 | `/feedback/submit` | POST | Submit Feedback | `{"from": {...}}` | Allow users to submit feedback for projects (requires API key) |
 | `/poetry` | GET | Creative Work | `{"count": number, "data": [{...}]}` | Personal poetry and creative writing (reversed order) |
 | `/poetry/submit` | POST | Submit Poetry | `{"from": {...}}` | Submit new poetry entries (requires API key) |
-| `/ai/chat` | POST | AI Integration | `{"role": "assistant", "content": "..."}` | Smart responses and automated interactions |
+| `/baybayin` | GET | Baybayin Transliteration | `{"original": "text", "response": "ᜊᜌ᜔ᜊᜌᜒᜈ᜔"}` | Convert Filipino/Tagalog text to Baybayin script |
+| `/ai/chat` | POST | AI Integration | `{"role": "assistant", "content": "..."}` | Smart responses and automated interactions (enabled) |
 
 ### 🔄 Automatic Endpoint Transformation
 
@@ -62,6 +65,30 @@ This ensures clear distinction between data retrieval and data submission endpoi
 
 #### GET Endpoints
 All GET endpoints return JSON data directly or in a structured format with count and data fields.
+
+#### GET /baybayin
+**Query Parameters:**
+- `text` (required): The Filipino/Tagalog text to transliterate to Baybayin script
+
+**Example Request:**
+```
+GET /baybayin?text=kumusta ka
+```
+
+**Response:**
+```json
+{
+  "original": "kumusta ka",
+  "response": "ᜃᜓᜋᜓᜐ᜔ᜆ ᜃ"
+}
+```
+
+**Error Response (Missing text parameter):**
+```json
+{
+  "error": "Required parameter \"text\""
+}
+```
 
 #### POST /poetry/submit (Requires API Key)
 **Headers:**
@@ -119,7 +146,9 @@ X-API-Key: your_post_api_key
 }
 ```
 
-#### POST /ai/chat
+#### POST /ai/chat (Enabled)
+**Note:** This endpoint is now active and available for AI-powered conversations.
+
 **Request Body:**
 ```json
 {
@@ -139,6 +168,13 @@ X-API-Key: your_post_api_key
   "content": "Hello! I'm doing well, thank you for asking. How can I help you today?"
 }
 ```
+
+**Features:**
+- Powered by Pollinations AI (OpenAI-compatible)
+- Supports conversation history with multiple messages
+- Markdown formatting in responses
+- Temperature-controlled responses for consistency
+- Maximum 1000 tokens per response
 
 ## 💡 How It Works
 
@@ -189,7 +225,8 @@ portfolio-backend/
 │   ├── experiences.go     # Professional background
 │   ├── poetry.go          # Creative work retrieval
 │   ├── post_poetry.go     # Poetry submission
-│   ├── ai_agent.go        # AI integration (available but not active)
+│   ├── baybayin.go        # Baybayin transliteration service
+│   ├── ai_agent.go        # AI integration (available but disabled)
 │   └── routers.go         # Route registration
 ├── middleware/            # Server setup and security
 │   ├── server_handler.go  # Server configuration and CORS
@@ -269,7 +306,12 @@ await fetch('http://localhost:8000/feedback/submit', {
   })
 });
 
-// Chat with AI agent
+// Transliterate text to Baybayin
+const baybayinResponse = await fetch('http://localhost:8000/baybayin?text=mahal kita')
+  .then(res => res.json());
+console.log(baybayinResponse.response); // Output: ᜋᜑᜎ᜔ ᜃᜒᜆ
+
+// Chat with AI agent (when enabled)
 const aiResponse = await fetch('http://localhost:8000/ai/chat', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
@@ -306,6 +348,15 @@ Future<Map<String, dynamic>> submitFeedback(Map<String, dynamic> feedback) async
   );
   return json.decode(response.body);
 }
+
+// Baybayin transliteration in mobile app
+Future<String> translateToBaybayin(String text) async {
+  final response = await http.get(
+    Uri.parse('http://localhost:8000/baybayin?text=${Uri.encodeComponent(text)}')
+  );
+  final data = json.decode(response.body);
+  return data['response'];
+}
 ```
 
 ## 📊 Feedback & Testimonials System
@@ -318,6 +369,23 @@ This backend enables:
 - **Chronological ordering** with newest feedback first
 - **Secure submission** with API key validation
 
+## 🏛️ Baybayin Transliteration
+
+The Baybayin endpoint (`/baybayin`) provides:
+- **Filipino to Baybayin conversion** for cultural preservation
+- **Text normalization** (i→e, u→o, r→d, f→p, v→b, etc.)
+- **Special character handling** (ng combinations, punctuation)
+- **Vowel diacritics** for proper Baybayin representation
+- **Query parameter interface** for easy integration
+- **Error handling** for missing parameters
+
+### Baybayin Features:
+- Converts modern Filipino/Tagalog text to ancient Baybayin script
+- Handles consonant clusters and vowel modifications
+- Supports punctuation marks (periods, commas, question marks)
+- Normalizes modern letters to traditional Baybayin equivalents
+- Preserves word spacing and sentence structure
+
 ## 🤖 AI Integration
 
 The AI agent endpoint (`/ai/chat`) provides:
@@ -327,6 +395,7 @@ The AI agent endpoint (`/ai/chat`) provides:
 - **Temperature-controlled** responses for consistency
 - **Error handling** for robust API interactions
 - **OpenAI-compatible** API structure
+- **Pre-configured system prompts** for detailed, readable responses
 
 ## 🌟 Why This Architecture?
 
@@ -350,9 +419,13 @@ The AI agent endpoint (`/ai/chat`) provides:
 - **API key validation middleware** for protected endpoints
 - **Custom developer headers** for identification
 
-## ✅ Recent Updates & Improvements
+### ✅ Recent Updates & Improvements
 
-### Latest Changes (December 24, 2025)
+### Latest Changes (January 1, 2026)
+- [x] **AI Integration Enabled** - AI chat endpoint is now active and fully functional
+- [x] **Baybayin Optimization** - Improved transliteration accuracy and performance
+- [x] **Code Optimization** - Removed redundant functions for better performance
+- [x] **Documentation Updates** - Updated README with latest endpoint status
 - [x] **Enhanced Error Handling** - Improved error handling throughout the application
 - [x] **Custom Headers Middleware** - Added developer identification headers
 - [x] **Code Comments** - Added comprehensive comments for better code documentation
@@ -376,7 +449,8 @@ The AI agent endpoint (`/ai/chat`) provides:
 - [x] **Feedback Submission** (`POST /feedback/submit`) - User feedback collection
 - [x] **Poetry Collection** (`GET /poetry`) - Creative work showcase with count
 - [x] **Poetry Submission** (`POST /poetry/submit`) - Protected poetry creation
-- [x] **AI Chat Integration** (`POST /ai/chat`) - Conversational AI capabilities
+- [x] **Baybayin Transliteration** (`GET /baybayin`) - Filipino to Baybayin script conversion
+- [x] **AI Chat Integration** (`POST /ai/chat`) - Conversational AI capabilities (disabled in router)
 
 ### Security & Authentication
 - [x] **API Key Validation** - Middleware for protected POST endpoints
@@ -395,11 +469,12 @@ The AI agent endpoint (`/ai/chat`) provides:
 - [x] **Error Recovery** - Robust error handling for API failures
 
 ### AI Integration
-- [x] **Pollinations AI API** - Integration with OpenAI-compatible service
+- [x] **Pollinations AI API** - Integration with OpenAI-compatible service (enabled)
 - [x] **Conversation Context** - Message history support
 - [x] **Markdown Support** - Rich text responses with formatting
 - [x] **Temperature Control** - Consistent AI response generation
 - [x] **Error Handling** - Robust API failure management
+- [x] **Production Ready** - AI endpoint is now active and available for use
 
 ### Development Tools
 - [x] **Git Version Control** - Complete repository setup with proper gitignore
@@ -442,6 +517,14 @@ The AI agent endpoint (`/ai/chat`) provides:
 - [ ] **Mobile Push Notifications** - Real-time mobile app notifications
 - [ ] **Email Service** - Automated email responses and notifications
 
+### 🏛️ Cultural & Educational Features
+- [ ] **Enhanced Baybayin Support** - Additional Philippine scripts (Buhid, Hanunoo, Tagbanwa)
+- [ ] **Historical Context** - Educational content about Baybayin history
+- [ ] **Interactive Learning** - Baybayin learning modules and exercises
+- [ ] **Cultural Documentation** - Integration with Philippine cultural databases
+- [ ] **Multi-dialect Support** - Support for various Filipino regional languages
+- [ ] **Baybayin Font Generation** - Custom font creation for Baybayin text
+
 ### 🤖 AI & Machine Learning
 - [ ] **Enhanced AI Capabilities** - Multiple AI model support
 - [ ] **Conversation Memory** - Persistent conversation context
@@ -449,6 +532,8 @@ The AI agent endpoint (`/ai/chat`) provides:
 - [ ] **Sentiment Analysis** - Feedback sentiment classification
 - [ ] **Recommendation Engine** - Project recommendation based on user interests
 - [ ] **Natural Language Processing** - Advanced text analysis and insights
+- [ ] **AI-Powered Baybayin** - Machine learning for improved transliteration accuracy
+- [ ] **Cultural AI Assistant** - AI specialized in Filipino culture and history
 
 ### 🔒 Security & Compliance
 - [ ] **OAuth Integration** - Google, GitHub, LinkedIn authentication
@@ -486,18 +571,147 @@ The API includes comprehensive error handling:
 - ✅ Hot reload development setup
 - ✅ Comprehensive documentation
 
-### Phase 4: Recent Improvements (Completed)
+### Phase 4: Cultural Features (Completed)
+- ✅ Baybayin transliteration system implementation
+- ✅ Filipino text normalization and processing
+- ✅ Cultural heritage preservation features
 - ✅ Enhanced error handling throughout the application
+
+### Phase 5: Recent Improvements (Completed)
 - ✅ Custom headers middleware for developer identification
 - ✅ Improved code documentation with comments
 - ✅ Structure improvements and naming conventions
 - ✅ Better request validation and logging
 
-### Phase 5: Future Development (Planned)
+### Phase 6: Future Development (Planned)
 - 🔄 Database migration and performance optimization
 - 🔄 Advanced security and authentication
 - 🔄 Analytics and monitoring capabilities
 - 🔄 Extended AI features and integrations
+
+## 📋 Changelog
+
+### [v2.2.0] - 2026-01-01
+#### 🤖 AI Integration Enhancement
+- **Enabled**: AI chat endpoint (`/ai/chat`) is now active and available
+- **Updated**: AI integration status in documentation
+- **Enhanced**: AI agent functionality for production use
+- **Improved**: AI response handling and error management
+
+### [v2.1.0] - 2026-01-01
+#### 🏛️ Cultural Features & Optimizations
+- **Added**: Baybayin transliteration endpoint (`/baybayin`)
+- **Added**: Filipino text normalization (i→e, u→o, r→d, f→p, v→b, etc.)
+- **Added**: Special character handling for ng combinations
+- **Added**: Vowel diacritics support for proper Baybayin representation
+- **Removed**: Redundant string normalization function for optimization
+- **Fixed**: Baybayin transliterator accuracy and performance
+- **Improved**: Transliteration process efficiency
+- **Enhanced**: Cultural heritage preservation features
+
+### [v2.0.0] - 2025-12-27
+#### 🔧 Infrastructure & Error Handling
+- **Added**: Custom redirect error handling
+- **Improved**: Error response consistency across all endpoints
+- **Enhanced**: Request validation and error messages
+
+### [v1.9.0] - 2025-12-24
+#### 📚 Documentation & Code Quality
+- **Updated**: Comprehensive README documentation
+- **Added**: Detailed code comments throughout the application
+- **Improved**: Error handling mechanisms
+- **Enhanced**: Code structure and organization
+- **Added**: Developer identification headers
+
+### [v1.8.0] - 2025-12-23
+#### 🤖 AI Integration & Structure Improvements
+- **Added**: Pollinations AI integration for chat functionality
+- **Added**: AI agent endpoint (`/ai/chat`) with OpenAI-compatible API
+- **Added**: Markdown support in AI responses
+- **Improved**: Code structure separation (utils, endpoints, middleware)
+- **Fixed**: POST method access and validation
+- **Enhanced**: Request/response handling
+- **Updated**: README with comprehensive API documentation
+
+### [v1.7.0] - 2025-12-22
+#### 📊 Data Management Enhancements
+- **Added**: Total count tracking for feedback collections
+- **Added**: GET request support for feedback retrieval
+- **Improved**: Data aggregation and response formatting
+- **Enhanced**: Feedback system with chronological ordering
+
+### [v1.6.0] - 2025-12-21
+#### 🌐 CORS & Experiences
+- **Added**: CORS configuration for cross-origin requests
+- **Added**: Experiences endpoint for professional background data
+- **Added**: `experiences.json` data structure
+- **Fixed**: Cross-origin access issues
+- **Improved**: Server configuration and middleware setup
+
+### [v1.5.0] - 2025-12-20
+#### 🔧 Configuration & Deployment
+- **Added**: Environment-based PORT configuration
+- **Added**: PORT manager for flexible deployment
+- **Fixed**: Auto import from API functionality
+- **Improved**: POST method handling for Gist operations
+- **Enhanced**: Environment variable management
+
+### [v1.4.0] - 2025-12-19
+#### 🚀 Deployment Optimization
+- **Removed**: Vercel configuration files
+- **Deleted**: `uptime.go` file for cleaner structure
+- **Improved**: Deployment configuration
+- **Optimized**: Server startup and configuration
+
+### [v1.3.0] - 2025-12-18
+#### 🔐 Security & Monitoring
+- **Added**: POST request functionality with API key validation
+- **Added**: Case-insensitive request handling
+- **Added**: Request logging and monitoring
+- **Enhanced**: Security middleware implementation
+- **Improved**: Request validation and error handling
+
+### [v1.2.0] - 2025-12-17
+#### 📁 Data Integration
+- **Added**: Projects endpoint with Gist data integration
+- **Added**: Dynamic project showcase functionality
+- **Fixed**: Initial Gist API integration issues
+- **Improved**: Data retrieval and processing
+
+### [v1.1.0] - 2025-12-15
+#### 🏗️ Core Infrastructure
+- **Added**: GitHub Gist integration for data storage
+- **Added**: Environment configuration with `.env` support
+- **Added**: Utility functions for API access
+- **Added**: Custom 404 error handling
+- **Improved**: Server structure and middleware organization
+- **Enhanced**: Route registration system
+
+### [v1.0.0] - 2025-12-15
+#### 🎉 Initial Release
+- **Added**: Basic Go backend with Gin framework
+- **Added**: Hot reload development setup with Air
+- **Added**: Modular endpoint structure
+- **Added**: Route registration system
+- **Added**: Basic server configuration
+- **Added**: Initial project structure and dependencies
+
+---
+
+### 🏷️ Version Naming Convention
+- **Major versions** (x.0.0): Significant architectural changes or breaking changes
+- **Minor versions** (x.y.0): New features, endpoints, or major enhancements
+- **Patch versions** (x.y.z): Bug fixes, optimizations, and minor improvements
+
+### 📝 Changelog Categories
+- **Added**: New features, endpoints, or functionality
+- **Changed**: Changes in existing functionality
+- **Deprecated**: Soon-to-be removed features
+- **Removed**: Removed features or files
+- **Fixed**: Bug fixes and error corrections
+- **Security**: Security-related improvements
+- **Improved**: Performance or code quality enhancements
+- **Enhanced**: User experience or functionality improvements
 
 ## 📞 Contact & Feedback
 
@@ -505,6 +719,20 @@ The API includes comprehensive error handling:
 - 📧 Email: weryses19@gmail.com
 - 🔗 [GitHub](https://github.com/RyannKim327)
 - 💼 [LinkedIn](https://www.linkedin.com/in/ryannkim327/)
+
+---
+
+## 🎯 Project Milestones
+
+- **🎉 December 15, 2025**: Initial project creation and basic server setup
+- **🔗 December 17, 2025**: GitHub Gist integration for data management
+- **🔐 December 18, 2025**: Security implementation with API key validation
+- **🌐 December 21, 2025**: CORS configuration and experiences endpoint
+- **📊 December 22, 2025**: Feedback system with count aggregation
+- **🤖 December 23, 2025**: AI integration with Pollinations API
+- **📚 December 24, 2025**: Comprehensive documentation and code comments
+- **🏛️ December 31, 2025**: Baybayin transliteration system implementation
+- **✨ January 1, 2026**: Cultural heritage features optimization and AI integration enablement
 
 ---
 
