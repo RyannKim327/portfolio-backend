@@ -680,7 +680,7 @@ The API includes comprehensive error handling:
 
 ## 📋 Changelog
 
-### [v2.3.0] - 2026-01-01
+### [v2.3.0] - 2026-01-03
 #### 🔐 Authentication System Overhaul
 - **Added**: Cookie-based authentication system for user-facing endpoints
 - **Added**: Three-tier permission system (ALL, COOKIE, ADMIN)
@@ -693,7 +693,7 @@ The API includes comprehensive error handling:
 - **Improved**: Error handling for authentication failures
 - **Updated**: Documentation with new authentication flow examples
 
-### [v2.2.0] - 2026-01-01
+### [v2.2.0] - 2026-01-03
 #### 🤖 AI Integration Enhancement
 - **Enabled**: AI chat endpoint (`/ai/chat`) is now active and available
 - **Updated**: AI integration status in documentation
