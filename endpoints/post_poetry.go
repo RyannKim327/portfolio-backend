@@ -26,7 +26,8 @@ func poetry(ctx *gin.Context) {
 }
 
 var PostPoetry = utils.Route{
-	Path:    "/poetry",
-	Method:  "POST",
-	Handler: poetry,
+	Path:       "/poetry",
+	Method:     utils.METHOD_POST,
+	Permission: utils.PERMISSION_ADMIN,
+	Handler:    poetry,
 }

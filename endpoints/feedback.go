@@ -8,7 +8,7 @@ import (
 
 var GetFeedback = utils.Route{
 	Path:   "/feedback",
-	Method: "GET",
+	Method: utils.METHOD_GET,
 	Handler: func(ctx *gin.Context) {
 		data := utils.GistHandlerList("feedback.json")
 		utils.Reverse(data)

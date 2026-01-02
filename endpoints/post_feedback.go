@@ -7,9 +7,10 @@ import (
 )
 
 var PostFeedback = utils.Route{
-	Path:    "/feedback",
-	Method:  "POST",
-	Handler: feedback,
+	Path:       "/feedback",
+	Method:     utils.METHOD_POST,
+	Permission: utils.PERMISSION_COOKIE,
+	Handler:    feedback,
 }
 
 func feedback(ctx *gin.Context) {

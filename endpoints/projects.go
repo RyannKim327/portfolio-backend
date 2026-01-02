@@ -8,7 +8,7 @@ import (
 
 var GetProjects = utils.Route{
 	Path:   "/projects",
-	Method: "GET",
+	Method: utils.METHOD_GET,
 	Handler: func(ctx *gin.Context) {
 		data := utils.GistHandler("projects.json")
 		ctx.JSON(200, data)

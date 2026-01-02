@@ -22,7 +22,7 @@ func CorsSetup() {
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: false,
+		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
 
@@ -68,7 +68,7 @@ func Register(routes utils.Route) {
 	routes.Path = strings.ToLower(routes.Path)
 
 	// TODO: To automatically add "/submit" in every required post requests
-	if method == "post" && !strings.HasSuffix(routes.Path, "/submit") {
+	if method == strings.ToLower(utils.METHOD_POST) && !strings.HasSuffix(routes.Path, "/submit") {
 
 		// TODO: To prevent double slash in endpoints
 		if !strings.HasSuffix(routes.Path, "/") {
@@ -78,17 +78,48 @@ func Register(routes utils.Route) {
 		routes.Path += "submit"
 	}
 
+	// TODO: To setup default permission
+	if routes.Permission == "" {
+		if routes.Method == utils.METHOD_POST {
+			routes.Permission = utils.PERMISSION_COOKIE
+		} else {
+			routes.Permission = utils.PERMISSION_ALL
+		}
+	}
+
 	switch method {
 	case "get":
-		app.GET(routes.Path, routes.Handler)
+		switch routes.Permission {
+		case utils.PERMISSION_COOKIE:
+			app.GET(routes.Path, RequestHandlerCookie(), routes.Handler)
+		case utils.PERMISSION_ADMIN:
+			app.GET(routes.Path, RequestHandlerAdmin(), routes.Handler)
+		default:
+			app.GET(routes.Path, routes.Handler)
+		}
 	case "post":
-		app.POST(routes.Path, PostRequestHandler(), routes.Handler)
+		switch routes.Permission {
+		case utils.PERMISSION_COOKIE:
+			app.POST(routes.Path, RequestHandlerCookie(), routes.Handler)
+		case utils.PERMISSION_ADMIN:
+			app.POST(routes.Path, RequestHandlerAdmin(), routes.Handler)
+		default:
+			app.POST(routes.Path, routes.Handler)
+		}
 	case "put":
-		app.PUT(routes.Path, routes.Handler)
+		switch routes.Permission {
+		case utils.PERMISSION_COOKIE:
+			app.PUT(routes.Path, RequestHandlerCookie(), routes.Handler)
+		case utils.PERMISSION_ADMIN:
+			app.PUT(routes.Path, RequestHandlerAdmin(), routes.Handler)
+		}
 	case "delete":
-		app.DELETE(routes.Path, routes.Handler)
-	case "ai":
-		app.POST(routes.Path, routes.Handler)
+		switch routes.Permission {
+		case utils.PERMISSION_COOKIE:
+			app.DELETE(routes.Path, RequestHandlerCookie(), routes.Handler)
+		case utils.PERMISSION_ADMIN:
+			app.DELETE(routes.Path, RequestHandlerAdmin(), routes.Handler)
+		}
 	}
 }
 
