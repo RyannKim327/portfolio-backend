@@ -1,0 +1,15 @@
+package utils
+
+const (
+
+	// TODO: Methods
+	METHOD_GET    = "GET"
+	METHOD_POST   = "POST"
+	METHOD_PUT    = "PUT"
+	METHOD_DELETE = "DELETE"
+
+	// TODO: Permissions
+	PERMISSION_ADMIN  = "ADMIN"
+	PERMISSION_ALL    = "ALL"
+	PERMISSION_COOKIE = "COOKIE"
+)

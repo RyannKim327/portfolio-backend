@@ -41,17 +41,18 @@ All data is managed through **GitHub Gist** as a lightweight, version-controlled
 
 ## 🚀 Live API Endpoints
 
-| Endpoint | Method | Purpose | Response Format | Description |
-|----------|--------|---------|-----------------|-------------|
-| `/` | GET | Welcome | `{"message": "The server is now active"}` | API health check and welcome message |
-| `/projects` | GET | Projects Showcase | `[{...}]` | List of all portfolio projects with details |
-| `/experiences` | GET | Professional Background | `[{...}]` | Work experience and education history |
-| `/feedback` | GET | Testimonials | `{"count": number, "data": [{...}]}` | User feedback and project testimonials (reversed order) |
-| `/feedback/submit` | POST | Submit Feedback | `{"from": {...}}` | Allow users to submit feedback for projects (requires API key) |
-| `/poetry` | GET | Creative Work | `{"count": number, "data": [{...}]}` | Personal poetry and creative writing (reversed order) |
-| `/poetry/submit` | POST | Submit Poetry | `{"from": {...}}` | Submit new poetry entries (requires API key) |
-| `/baybayin` | GET | Baybayin Transliteration | `{"original": "text", "response": "ᜊᜌ᜔ᜊᜌᜒᜈ᜔"}` | Convert Filipino/Tagalog text to Baybayin script |
-| `/ai/chat` | POST | AI Integration | `{"role": "assistant", "content": "..."}` | Smart responses and automated interactions (enabled) |
+| Endpoint | Method | Purpose | Permission | Response Format | Description |
+|----------|--------|---------|------------|-----------------|-------------|
+| `/` | GET | Welcome | ALL | `{"message": "The server is now active"}` | API health check and welcome message |
+| `/projects` | GET | Projects Showcase | ALL | `[{...}]` | List of all portfolio projects with details |
+| `/experiences` | GET | Professional Background | ALL | `[{...}]` | Work experience and education history |
+| `/feedback` | GET | Testimonials | ALL | `{"count": number, "data": [{...}]}` | User feedback and project testimonials (reversed order) |
+| `/feedback/submit` | POST | Submit Feedback | COOKIE | `{"from": {...}}` | Allow users to submit feedback for projects (requires cookie token) |
+| `/poetry` | GET | Creative Work | ALL | `{"count": number, "data": [{...}]}` | Personal poetry and creative writing (reversed order) |
+| `/poetry/submit` | POST | Submit Poetry | ADMIN | `{"from": {...}}` | Submit new poetry entries (requires admin API key) |
+| `/baybayin` | GET | Baybayin Transliteration | ALL | `{"original": "text", "response": "ᜊᜌ᜔ᜊᜌᜒᜈ᜔"}` | Convert Filipino/Tagalog text to Baybayin script |
+| `/ai/chat` | POST | AI Integration | ALL | `{"role": "assistant", "content": "..."}` | Smart responses and automated interactions (enabled) |
+| `/set-cookie` | GET | Cookie Authentication | ALL | `{"message": "Token is now generated..."}` | Generate temporary authentication token for protected endpoints |
 
 ### 🔄 Automatic Endpoint Transformation
 
@@ -60,6 +61,26 @@ The backend automatically transforms POST endpoints by adding `/submit` suffix:
 - `POST /poetry` → `POST /poetry/submit`
 
 This ensures clear distinction between data retrieval and data submission endpoints.
+
+### 🔐 Permission System
+
+The API implements a three-tier permission system:
+
+- **ALL**: Public access, no authentication required
+- **COOKIE**: Requires temporary authentication token from `/set-cookie` endpoint
+- **ADMIN**: Requires admin API key via `X-API-Key` header
+
+#### Cookie-Based Authentication
+For endpoints requiring COOKIE permission:
+1. First call `GET /set-cookie` to generate a temporary token
+2. The token is automatically set as an HTTP-only cookie
+3. Use the cookie for subsequent requests to protected endpoints
+4. Tokens expire after 30 minutes (1800 seconds)
+
+#### Admin Authentication
+For endpoints requiring ADMIN permission:
+- Include `X-API-Key: your_admin_api_key` in request headers
+- Admin key is configured via `POST_API` environment variable
 
 ### Request/Response Examples
 
@@ -90,10 +111,64 @@ GET /baybayin?text=kumusta ka
 }
 ```
 
-#### POST /poetry/submit (Requires API Key)
+#### GET /set-cookie (Cookie Authentication)
+**Purpose:** Generate temporary authentication token for protected endpoints
+
+**Example Request:**
+```
+GET /set-cookie
+```
+
+**Response (New Token):**
+```json
+{
+  "message": "Token is now generated, you may now continue"
+}
+```
+
+**Response (Existing Token):**
+```json
+{
+  "message": "You still have an active token"
+}
+```
+
+**Features:**
+- Generates cryptographically secure 30-character token
+- Sets HTTP-only cookie with SameSite=None for cross-origin support
+- Token expires after 30 minutes
+- Prevents token regeneration if active token exists
+- Secure flag enabled for HTTPS environments
+
+#### POST /feedback/submit (Requires Cookie Token)
+**Authentication:** Must have valid cookie token from `/set-cookie`
+
+**Request Body:**
+```json
+{
+  "project": "My Awesome App",
+  "rating": 5,
+  "comment": "Great application!",
+  "user": "John Doe"
+}
+```
+
+**Response:**
+```json
+{
+  "from": {
+    "project": "My Awesome App",
+    "rating": 5,
+    "comment": "Great application!",
+    "user": "John Doe"
+  }
+}
+```
+
+#### POST /poetry/submit (Requires Admin API Key)
 **Headers:**
 ```
-X-API-Key: your_post_api_key
+X-API-Key: your_admin_api_key
 ```
 
 **Request Body:**
@@ -118,36 +193,11 @@ X-API-Key: your_post_api_key
 }
 ```
 
-#### POST /feedback/submit (Requires API Key)
-**Headers:**
-```
-X-API-Key: your_post_api_key
-```
 
-**Request Body:**
-```json
-{
-  "project": "My Awesome App",
-  "rating": 5,
-  "comment": "Great application!",
-  "user": "John Doe"
-}
-```
-
-**Response:**
-```json
-{
-  "from": {
-    "project": "My Awesome App",
-    "rating": 5,
-    "comment": "Great application!",
-    "user": "John Doe"
-  }
-}
-```
 
 #### POST /ai/chat (Enabled)
 **Note:** This endpoint is now active and available for AI-powered conversations.
+**Authentication:** Public access (ALL permission)
 
 **Request Body:**
 ```json
@@ -175,6 +225,8 @@ X-API-Key: your_post_api_key
 - Markdown formatting in responses
 - Temperature-controlled responses for consistency
 - Maximum 1000 tokens per response
+- Pre-configured system prompts for detailed, readable responses
+- No authentication required for public access
 
 ## 💡 How It Works
 
@@ -213,7 +265,7 @@ flowchart TD
 - **Development**: Air (Hot reload)
 - **AI Integration**: Pollinations AI API (OpenAI-compatible)
 - **CORS**: Configured for cross-origin requests
-- **Authentication**: GitHub Personal Access Token + API Key for POST operations
+- **Authentication**: Multi-tier system (Public, Cookie-based, Admin API Key)
 - **Deployment**: Lightweight, containerizable
 - **Security**: API key validation for protected endpoints
 - **Headers**: Custom developer identification headers
@@ -226,21 +278,24 @@ portfolio-backend/
 │   ├── index.go           # Welcome endpoint
 │   ├── projects.go        # Projects showcase endpoint
 │   ├── feedback.go        # Feedback retrieval
-│   ├── post_feedback.go   # Feedback submission
+│   ├── post_feedback.go   # Feedback submission (cookie auth)
 │   ├── experiences.go     # Professional background
 │   ├── poetry.go          # Creative work retrieval
-│   ├── post_poetry.go     # Poetry submission
+│   ├── post_poetry.go     # Poetry submission (admin auth)
 │   ├── baybayin.go        # Baybayin transliteration service
-│   ├── ai_agent.go        # AI integration (available but disabled)
+│   ├── ai_agent.go        # AI integration (enabled)
+│   ├── set_cookie.go      # Cookie authentication endpoint
 │   └── routers.go         # Route registration
 ├── middleware/            # Server setup and security
 │   ├── server_handler.go  # Server configuration and CORS
-│   ├── post_request.go    # API key validation middleware
+│   ├── post_request.go    # Admin API key validation middleware
+│   ├── cookie_handler.go  # Cookie-based authentication middleware
 │   └── headers.go         # Custom response headers
 ├── utils/                 # GitHub Gist integration & utilities
 │   ├── gist.go           # Gist API handlers with error handling
 │   ├── gist_handler.go   # Gist data processing
 │   ├── structures.go     # Data structures and types
+│   ├── statics.go        # Constants and static values
 │   └── tools.go          # Utility functions
 ├── .env                   # Environment configuration
 ├── .air.toml             # Hot reload configuration
@@ -273,7 +328,7 @@ portfolio-backend/
    echo "APP_ENV=development" > .env
    echo "API_KEY=your_github_personal_access_token" >> .env
    echo "GIST_ID=your_gist_id" >> .env
-   echo "POST_API=your_post_api_key" >> .env
+   echo "POST_API=your_admin_api_key" >> .env
    echo "PORT=8000" >> .env  # Optional: specify custom port
    ```
 
@@ -296,12 +351,17 @@ The API will be available at `http://localhost:8000`
 const projects = await fetch('http://localhost:8000/projects')
   .then(res => res.json());
 
-// Submit user feedback
+// Get authentication cookie first
+await fetch('http://localhost:8000/set-cookie', {
+  credentials: 'include' // Important for cookie handling
+});
+
+// Submit user feedback (requires cookie)
 await fetch('http://localhost:8000/feedback/submit', {
   method: 'POST',
+  credentials: 'include', // Include cookies
   headers: { 
-    'Content-Type': 'application/json',
-    'X-API-Key': 'your_post_api_key'
+    'Content-Type': 'application/json'
   },
   body: JSON.stringify({
     project: 'My Awesome App',
@@ -316,7 +376,7 @@ const baybayinResponse = await fetch('http://localhost:8000/baybayin?text=mahal 
   .then(res => res.json());
 console.log(baybayinResponse.response); // Output: ᜋᜑᜎ᜔ ᜃᜒᜆ
 
-// Chat with AI agent (when enabled)
+// Chat with AI agent (public access)
 const aiResponse = await fetch('http://localhost:8000/ai/chat', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
@@ -341,13 +401,22 @@ Future<List<dynamic>> fetchProjects() async {
   return json.decode(response.body);
 }
 
-// Submit feedback from mobile app
+// Get authentication cookie first
+Future<void> getAuthCookie() async {
+  await http.get(
+    Uri.parse('http://localhost:8000/set-cookie')
+  );
+}
+
+// Submit feedback from mobile app (requires cookie)
 Future<Map<String, dynamic>> submitFeedback(Map<String, dynamic> feedback) async {
+  // Ensure cookie is set first
+  await getAuthCookie();
+  
   final response = await http.post(
     Uri.parse('http://localhost:8000/feedback/submit'),
     headers: {
-      'Content-Type': 'application/json',
-      'X-API-Key': 'your_post_api_key'
+      'Content-Type': 'application/json'
     },
     body: json.encode(feedback),
   );
@@ -372,7 +441,8 @@ This backend enables:
 - **Project-specific reviews** to showcase user satisfaction
 - **Automated feedback aggregation** for portfolio statistics
 - **Chronological ordering** with newest feedback first
-- **Secure submission** with API key validation
+- **Secure submission** with cookie-based authentication
+- **Admin-protected content** with API key validation
 
 ## 🏛️ Baybayin Transliteration
 
@@ -415,26 +485,34 @@ The AI agent endpoint (`/ai/chat`) provides:
 
 ## 🔒 Security & Configuration
 
+- **Multi-tier authentication system** with cookie and API key validation
 - **Environment-based API key management** for GitHub Gist access
-- **CORS enabled** for cross-origin requests from `https://ryannkim327.is-a.dev`
+- **CORS enabled** with credentials support for cross-origin requests
 - **Input validation** for all POST endpoints
 - **Error handling** with appropriate HTTP status codes
 - **Request logging** with timestamps and status codes
 - **Custom 404 page** for undefined routes
-- **API key validation middleware** for protected endpoints
+- **Permission-based middleware** for endpoint protection
+- **Cookie-based authentication** for user-facing endpoints
+- **Admin API key validation** for administrative operations
 - **Custom developer headers** for identification
 
 ### ✅ Recent Updates & Improvements
 
 ### Latest Changes (January 1, 2026)
+- [x] **Cookie Authentication System** - Implemented secure cookie-based authentication for user endpoints
+- [x] **Permission-Based Access Control** - Three-tier permission system (ALL, COOKIE, ADMIN)
+- [x] **Enhanced Security Middleware** - Separate authentication handlers for different permission levels
+- [x] **CORS Credentials Support** - Enabled credential support for cross-origin cookie handling
+- [x] **Set-Cookie Endpoint** - New endpoint for generating temporary authentication tokens
 - [x] **AI Integration Enabled** - AI chat endpoint is now active and fully functional
 - [x] **Baybayin Optimization** - Improved transliteration accuracy and performance
 - [x] **Code Optimization** - Removed redundant functions for better performance
-- [x] **Documentation Updates** - Updated README with latest endpoint status
+- [x] **Documentation Updates** - Updated README with latest endpoint status and authentication
 - [x] **Enhanced Error Handling** - Improved error handling throughout the application
 - [x] **Custom Headers Middleware** - Added developer identification headers
 - [x] **Code Comments** - Added comprehensive comments for better code documentation
-- [x] **Structure Improvements** - Fixed naming conventions (AccessApi → AccessAPI)
+- [x] **Structure Improvements** - Fixed naming conventions and method constants
 - [x] **Request Validation** - Enhanced request validation and error responses
 - [x] **Logging Improvements** - Better request logging with timestamps
 
@@ -455,15 +533,20 @@ The AI agent endpoint (`/ai/chat`) provides:
 - [x] **Poetry Collection** (`GET /poetry`) - Creative work showcase with count
 - [x] **Poetry Submission** (`POST /poetry/submit`) - Protected poetry creation
 - [x] **Baybayin Transliteration** (`GET /baybayin`) - Filipino to Baybayin script conversion
-- [x] **AI Chat Integration** (`POST /ai/chat`) - Conversational AI capabilities (disabled in router)
+- [x] **AI Chat Integration** (`POST /ai/chat`) - Conversational AI capabilities (enabled and active)
+- [x] **Cookie Authentication** (`GET /set-cookie`) - Temporary token generation for protected endpoints
 
 ### Security & Authentication
-- [x] **API Key Validation** - Middleware for protected POST endpoints
+- [x] **Multi-Tier Authentication** - Cookie-based and API key validation systems
+- [x] **Permission-Based Access Control** - Three permission levels (ALL, COOKIE, ADMIN)
+- [x] **Cookie Security** - HTTP-only, secure cookies with SameSite protection
+- [x] **Token Generation** - Cryptographically secure temporary tokens
 - [x] **Environment Security** - Secure token and key management
-- [x] **CORS Security** - Configured for specific domain access
+- [x] **CORS Security** - Configured with credentials support for cross-origin access
 - [x] **Input Validation** - JSON binding and error handling
 - [x] **Error Handling** - Comprehensive error responses with proper HTTP codes
 - [x] **Custom Headers** - Developer identification in response headers
+- [x] **Request Middleware** - Separate handlers for different authentication levels
 
 ### Data Management
 - [x] **Gist File Operations** - Read, write, and update operations with error handling
@@ -479,7 +562,8 @@ The AI agent endpoint (`/ai/chat`) provides:
 - [x] **Markdown Support** - Rich text responses with formatting
 - [x] **Temperature Control** - Consistent AI response generation
 - [x] **Error Handling** - Robust API failure management
-- [x] **Production Ready** - AI endpoint is now active and available for use
+- [x] **Production Ready** - AI endpoint is now active and available for public use
+- [x] **Public Access** - No authentication required for AI chat functionality
 
 ### Development Tools
 - [x] **Git Version Control** - Complete repository setup with proper gitignore
@@ -596,12 +680,26 @@ The API includes comprehensive error handling:
 
 ## 📋 Changelog
 
+### [v2.3.0] - 2026-01-01
+#### 🔐 Authentication System Overhaul
+- **Added**: Cookie-based authentication system for user-facing endpoints
+- **Added**: Three-tier permission system (ALL, COOKIE, ADMIN)
+- **Added**: `/set-cookie` endpoint for temporary token generation
+- **Enhanced**: Security middleware with permission-based access control
+- **Improved**: CORS configuration with credentials support
+- **Updated**: Feedback submission now uses cookie authentication instead of API key
+- **Enhanced**: Request handling with automatic permission assignment
+- **Added**: Cryptographically secure token generation (30-character tokens)
+- **Improved**: Error handling for authentication failures
+- **Updated**: Documentation with new authentication flow examples
+
 ### [v2.2.0] - 2026-01-01
 #### 🤖 AI Integration Enhancement
 - **Enabled**: AI chat endpoint (`/ai/chat`) is now active and available
 - **Updated**: AI integration status in documentation
 - **Enhanced**: AI agent functionality for production use
 - **Improved**: AI response handling and error management
+- **Changed**: AI endpoint now has public access (ALL permission)
 
 ### [v2.1.0] - 2026-01-01
 #### 🏛️ Cultural Features & Optimizations

@@ -9,9 +9,10 @@ import (
 // TODO: Just create a structure inside and call it outside
 
 type Route struct {
-	Method  string
-	Path    string
-	Handler gin.HandlerFunc
+	Method     string
+	Path       string
+	Permission string
+	Handler    gin.HandlerFunc
 }
 
 type GistFile struct {

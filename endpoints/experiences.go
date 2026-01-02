@@ -8,7 +8,7 @@ import (
 
 var GetExperiences = utils.Route{
 	Path:   "/experiences",
-	Method: "GET",
+	Method: utils.METHOD_GET,
 	Handler: func(ctx *gin.Context) {
 		data := utils.GistHandlerList("experiences.json")
 		ctx.JSON(200, data)

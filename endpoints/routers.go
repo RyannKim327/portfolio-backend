@@ -21,4 +21,7 @@ var Routes = []utils.Route{
 	// TODO: POST Requests
 	PostFeedback,
 	PostPoetry,
+
+	// TODO: Cookie Handler
+	GetCookie,
 }

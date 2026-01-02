@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func PostRequestHandler() gin.HandlerFunc {
+func RequestHandlerAdmin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		key := ctx.GetHeader("X-API-Key")
 		expectedKey := os.Getenv("POST_API")

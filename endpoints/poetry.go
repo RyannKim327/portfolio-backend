@@ -8,7 +8,7 @@ import (
 
 var GetPoetry = utils.Route{
 	Path:   "/poetry",
-	Method: "GET",
+	Method: utils.METHOD_GET,
 	Handler: func(ctx *gin.Context) {
 		data := utils.GistHandlerList("poetry.json")
 		utils.Reverse(data)

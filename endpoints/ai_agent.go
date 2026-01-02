@@ -12,9 +12,10 @@ import (
 )
 
 var PostAIAgent = utils.Route{
-	Path:    "/ai/chat",
-	Method:  "ai",
-	Handler: aiagent,
+	Path:       "/ai/chat",
+	Method:     utils.METHOD_POST,
+	Permission: utils.PERMISSION_ALL,
+	Handler:    aiagent,
 }
 
 func aiagent(ctx *gin.Context) {
