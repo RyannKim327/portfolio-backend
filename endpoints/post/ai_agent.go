@@ -1,4 +1,4 @@
-package endpoints
+package post
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var PostAIAgent = utils.Route{
+var AIAgent = utils.Route{
 	Path:       "/ai/chat",
 	Method:     utils.METHOD_POST,
 	Permission: utils.PERMISSION_ALL,

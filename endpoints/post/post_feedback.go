@@ -1,4 +1,4 @@
-package endpoints
+package post
 
 import (
 	"portfolio-backend/utils"
@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var PostFeedback = utils.Route{
+var Feedback = utils.Route{
 	Path:       "/feedback",
 	Method:     utils.METHOD_POST,
 	Permission: utils.PERMISSION_COOKIE,

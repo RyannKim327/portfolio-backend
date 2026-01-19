@@ -1,20 +1,31 @@
 package endpoints
 
 import (
+	get "portfolio-backend/endpoints/get"
+	post "portfolio-backend/endpoints/post"
 	utils "portfolio-backend/utils"
-
-	"github.com/gin-gonic/gin"
 )
 
-/*
- * TODO: This is just a template for the other endpoint
+/*  TODO: To include/merge the files/endpoint
+ * to call it into the frontend
  */
 
-var Index = utils.Route{
-	Path: "",
-	Handler: func(ctx *gin.Context) {
-		ctx.JSON(200, gin.H{
-			"message": "The server is now active",
-		})
-	},
+var Routes = []utils.Route{
+	// TODO: GET Requests
+	get.Index,
+	get.Baybayin,
+	get.Experiences,
+	get.Feedback,
+	get.Poetry,
+	get.Projects,
+
+	// TODO: Created AI Endpoint
+	post.AIAgent,
+
+	// TODO: POST Requests
+	post.Feedback,
+	post.Poetry,
+
+	// TODO: Cookie Handler
+	get.Cookie,
 }

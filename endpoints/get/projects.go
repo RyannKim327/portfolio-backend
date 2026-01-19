@@ -1,4 +1,4 @@
-package endpoints
+package get
 
 import (
 	"portfolio-backend/utils"
@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var GetProjects = utils.Route{
+var Projects = utils.Route{
 	Path:   "/projects",
 	Method: utils.METHOD_GET,
 	Handler: func(ctx *gin.Context) {

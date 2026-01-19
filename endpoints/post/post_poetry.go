@@ -1,4 +1,4 @@
-package endpoints
+package post
 
 import (
 	"portfolio-backend/utils"
@@ -25,7 +25,7 @@ func poetry(ctx *gin.Context) {
 	})
 }
 
-var PostPoetry = utils.Route{
+var Poetry = utils.Route{
 	Path:       "/poetry",
 	Method:     utils.METHOD_POST,
 	Permission: utils.PERMISSION_ADMIN,

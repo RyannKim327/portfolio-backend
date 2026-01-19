@@ -6,6 +6,7 @@ const (
 	METHOD_GET    = "GET"
 	METHOD_POST   = "POST"
 	METHOD_PUT    = "PUT"
+	METHOD_PATCH  = "PATCH"
 	METHOD_DELETE = "DELETE"
 
 	// TODO: Permissions
