@@ -1,4 +1,4 @@
-package endpoints
+package get
 
 import (
 	"crypto/rand"
@@ -14,7 +14,7 @@ import (
  * TODO: This is just a template for the other endpoint
  */
 
-var GetCookie = utils.Route{
+var Cookie = utils.Route{
 	Path:    "/set-cookie",
 	Handler: setCookie,
 }

@@ -58,17 +58,17 @@ func Register(routes utils.Route) {
 
 	// TODO: Make GET Request as default
 	if routes.Method == "" {
-		routes.Method = "GET"
+		routes.Method = utils.METHOD_GET
 	}
 
 	// TODO: To make the "Method" case insensitive
-	method := strings.ToLower(routes.Method)
+	method := strings.ToUpper(routes.Method)
 
 	// TODO: To make sure that the endpoint is in lowercase
 	routes.Path = strings.ToLower(routes.Path)
 
 	// TODO: To automatically add "/submit" in every required post requests
-	if method == strings.ToLower(utils.METHOD_POST) && !strings.HasSuffix(routes.Path, "/submit") {
+	if method == strings.ToUpper(utils.METHOD_POST) && !strings.HasSuffix(routes.Path, "/submit") {
 
 		// TODO: To prevent double slash in endpoints
 		if !strings.HasSuffix(routes.Path, "/") {
@@ -88,7 +88,7 @@ func Register(routes utils.Route) {
 	}
 
 	switch method {
-	case "get":
+	case utils.METHOD_GET:
 		switch routes.Permission {
 		case utils.PERMISSION_COOKIE:
 			app.GET(routes.Path, RequestHandlerCookie(), routes.Handler)
@@ -97,7 +97,7 @@ func Register(routes utils.Route) {
 		default:
 			app.GET(routes.Path, routes.Handler)
 		}
-	case "post":
+	case utils.METHOD_POST:
 		switch routes.Permission {
 		case utils.PERMISSION_COOKIE:
 			app.POST(routes.Path, RequestHandlerCookie(), routes.Handler)
@@ -106,14 +106,21 @@ func Register(routes utils.Route) {
 		default:
 			app.POST(routes.Path, routes.Handler)
 		}
-	case "put":
+	case utils.METHOD_PATCH:
+		switch routes.Permission {
+		case utils.PERMISSION_COOKIE:
+			app.PATCH(routes.Path, RequestHandlerCookie(), routes.Handler)
+		case utils.PERMISSION_ADMIN:
+			app.PATCH(routes.Path, RequestHandlerAdmin(), routes.Handler)
+		}
+	case utils.METHOD_PUT:
 		switch routes.Permission {
 		case utils.PERMISSION_COOKIE:
 			app.PUT(routes.Path, RequestHandlerCookie(), routes.Handler)
 		case utils.PERMISSION_ADMIN:
 			app.PUT(routes.Path, RequestHandlerAdmin(), routes.Handler)
 		}
-	case "delete":
+	case utils.METHOD_DELETE:
 		switch routes.Permission {
 		case utils.PERMISSION_COOKIE:
 			app.DELETE(routes.Path, RequestHandlerCookie(), routes.Handler)

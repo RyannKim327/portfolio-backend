@@ -1,4 +1,4 @@
-package endpoints
+package get
 
 import (
 	"regexp"
@@ -13,7 +13,7 @@ import (
  * TODO: This is just a template for the other endpoint
  */
 
-var GetBaybayin = utils.Route{
+var Baybayin = utils.Route{
 	Path:    "/baybayin",
 	Handler: baybayin,
 }
