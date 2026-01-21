@@ -18,7 +18,7 @@ var app = gin.Default()
 // TODO: CORS Setup
 func CorsSetup() {
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"https://ryannkim327.is-a.dev"},
+		AllowOrigins:     []string{"https://ryannkim327.is-a.dev"}, // "http://localhost:5173"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},

@@ -2,6 +2,8 @@ package utils
 
 import (
 	"io"
+	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -42,5 +44,13 @@ type GPTMessage struct {
 type BodyAIStructure struct {
 	Messages []GPTMessage `json:"messages"`
 }
+
+type (
+	CachedArrayContent []map[string]interface{}
+	CacheTTL           time.Time
+	CacheMU            sync.RWMutex
+)
+
+var CachedDuration = (5 * time.Minute)
 
 type BaybayinCharacters = map[string]int

@@ -12,6 +12,10 @@ A comprehensive Go-based REST API backend designed to serve portfolio data throu
 - **CORS Support** with configurable origins
 - **Hot Reload Development** with Air
 - **Comprehensive Logging** with request tracking
+- **Environment-based Configuration** for development and production
+- **Modular Architecture** with clean separation of concerns
+- **Unicode Support** for Baybayin script rendering
+- **Caching System** for improved performance
 
 ## 📋 Table of Contents
 
@@ -20,7 +24,11 @@ A comprehensive Go-based REST API backend designed to serve portfolio data throu
 - [API Endpoints](#api-endpoints)
 - [Architecture](#architecture)
 - [Development](#development)
+- [Testing](#testing)
+- [Deployment](#deployment)
+- [Troubleshooting](#troubleshooting)
 - [Changelog](#changelog)
+- [Contributing](#contributing)
 - [License](#license)
 
 ## 🛠 Installation
@@ -30,6 +38,7 @@ A comprehensive Go-based REST API backend designed to serve portfolio data throu
 - Go 1.25.0 or higher
 - Git
 - GitHub Personal Access Token (for Gist integration)
+- [Air](https://github.com/cosmtrek/air) for hot reload development (optional but recommended)
 
 ### Setup
 
@@ -45,9 +54,15 @@ A comprehensive Go-based REST API backend designed to serve portfolio data throu
    ```
 
 3. **Configure environment variables**
+   
+   Create a `.env` file in the root directory with the following variables:
    ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
+   # Copy and modify these values according to your setup
+   APP_ENV=development
+   API_KEY=your_github_personal_access_token
+   GIST_ID=your_gist_id_for_data_storage
+   POST_API=your_post_api_key
+   PORT=8000
    ```
 
 4. **Run the application**
@@ -93,6 +108,7 @@ PORT=8000
 | `/feedback` | Retrieve feedback data | None | ALL |
 | `/poetry` | Get poetry collection | None | ALL |
 | `/baybayin` | Baybayin transliterator | `text` (query) | ALL |
+| `/set-cookie` | Set authentication cookie | None | ALL |
 
 ### POST Endpoints
 
@@ -245,6 +261,23 @@ go install github.com/cosmtrek/air@latest
 
 # Start development server with hot reload
 air
+
+# The server will automatically restart when you make changes to .go files
+# Build logs are saved to build-errors.log
+# Temporary files are stored in the tmp/ directory
+```
+
+### Building for Production
+
+```bash
+# Build the application
+go build -o portfolio-backend .
+
+# Run the built binary
+./portfolio-backend
+
+# Or build and run in one command
+go run index.go
 ```
 
 ### Project Structure
@@ -263,6 +296,7 @@ portfolio-backend/
 ├── utils/              # Utility functions
 │   ├── structures.go   # Data structures
 │   ├── gist_handler.go # GitHub Gist integration
+│   ├── gist.go         # Additional Gist utilities
 │   ├── statics.go      # Constants
 │   └── tools.go        # Helper functions
 ├── tmp/                # Temporary files (Air)
@@ -290,13 +324,22 @@ import (
 )
 
 var Example = utils.Route{
-    Path:   "/example",
-    Method: utils.METHOD_GET,
+    Path:       "/example",
+    Method:     utils.METHOD_GET,
+    Permission: utils.PERMISSION_ALL, // or PERMISSION_COOKIE, PERMISSION_ADMIN
     Handler: func(ctx *gin.Context) {
         ctx.JSON(200, gin.H{
             "message": "Hello World",
         })
     },
+}
+```
+
+Then add it to `endpoints/index.go`:
+```go
+var Routes = []utils.Route{
+    // ... existing routes
+    get.Example, // Add your new route here
 }
 ```
 
@@ -307,6 +350,139 @@ The application supports three permission levels:
 - **`PERMISSION_ALL`**: Open access, no authentication required
 - **`PERMISSION_COOKIE`**: Requires valid cookie authentication
 - **`PERMISSION_ADMIN`**: Requires admin-level authentication
+
+## 🧪 Testing
+
+### Manual Testing
+
+You can test the API endpoints using curl or any HTTP client:
+
+```bash
+# Test server status
+curl http://localhost:8000/
+
+# Test Baybayin transliterator
+curl "http://localhost:8000/baybayin?text=kumusta ka"
+
+# Test AI chat (POST request)
+curl -X POST http://localhost:8000/ai/chat/submit \
+  -H "Content-Type: application/json" \
+  -d '{"messages":[{"role":"user","content":"Hello!"}]}'
+
+# Test feedback submission (requires cookie)
+curl -X POST http://localhost:8000/feedback/submit \
+  -H "Content-Type: application/json" \
+  -H "Cookie: your-auth-cookie" \
+  -d '{"name":"Test","email":"test@example.com","message":"Test message"}'
+```
+
+### Environment Testing
+
+```bash
+# Test with different environments
+APP_ENV=production go run index.go
+APP_ENV=development go run index.go
+```
+
+## 🚀 Deployment
+
+### Production Deployment
+
+1. **Build the application**
+   ```bash
+   go build -o portfolio-backend .
+   ```
+
+2. **Set production environment variables**
+   ```bash
+   export APP_ENV=production
+   export API_KEY=your_production_github_token
+   export GIST_ID=your_production_gist_id
+   export POST_API=your_production_post_api_key
+   export PORT=8000
+   ```
+
+3. **Run the application**
+   ```bash
+   ./portfolio-backend
+   ```
+
+### Docker Deployment (Optional)
+
+Create a `Dockerfile`:
+```dockerfile
+FROM golang:1.25-alpine AS builder
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN go build -o portfolio-backend .
+
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates
+WORKDIR /root/
+COPY --from=builder /app/portfolio-backend .
+EXPOSE 8000
+CMD ["./portfolio-backend"]
+```
+
+### Environment Variables for Production
+
+- Set `APP_ENV=production` for production optimizations
+- Use secure API keys and tokens
+- Configure appropriate CORS origins
+- Set up proper logging and monitoring
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+#### Port Already in Use
+```bash
+# Check what's using port 8000
+lsof -i :8000
+
+# Kill the process or change PORT in .env
+export PORT=8080
+```
+
+#### GitHub API Rate Limiting
+- Ensure your GitHub Personal Access Token has proper permissions
+- Check rate limits: `curl -H "Authorization: token YOUR_TOKEN" https://api.github.com/rate_limit`
+
+#### CORS Issues
+- Check your CORS configuration in the middleware
+- Ensure your frontend origin is allowed
+
+#### Gist Access Issues
+- Verify your `GIST_ID` is correct
+- Ensure your GitHub token has gist permissions
+- Check if the gist is public or private
+
+#### Build Errors
+```bash
+# Clean module cache
+go clean -modcache
+
+# Reinstall dependencies
+go mod download
+
+# Verify Go version
+go version
+```
+
+### Debug Mode
+
+Enable debug logging by setting:
+```bash
+export APP_ENV=development
+```
+
+### Logs
+
+- Air build logs: `build-errors.log`
+- Application logs: Check console output
+- Request logs: Enabled by default in development mode
 
 ## 📝 Changelog
 
@@ -416,7 +592,9 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 - [Gin Web Framework](https://gin-gonic.com/) for the excellent HTTP framework
 - [Air](https://github.com/cosmtrek/air) for hot reload development
 - [Pollinations AI](https://pollinations.ai/) for AI chat integration
-- GitHub Gist API for data storage solution
+- [GitHub Gist API](https://docs.github.com/en/rest/gists) for data storage solution
+- [GoDotEnv](https://github.com/joho/godotenv) for environment variable management
+- [Gin CORS](https://github.com/gin-contrib/cors) for Cross-Origin Resource Sharing support
 
 ---
 
