@@ -52,9 +52,44 @@ func feedback_handler(ctx *gin.Context) {
 			}
 		}(cached)
 
+		// TODO: This is just to add how many pages
+		pages := len(cached) / limit
+
+		if pages < page || page <= 1 {
+			// TODO: To prevent out bound exception error
+			page = 1
+		}
+
+		// TODO: Start of pagination
+		start := limit * (page - 1)
+		end := start + limit
+
+		if end > len(cached) {
+			end = len(cached)
+		}
+
+		// TODO: Condition of paginator
+		if start >= len(cached) {
+			ctx.JSON(200, gin.H{
+				"pages":   1,
+				"current": page,
+				"count":   len(cached),
+				"data":    cached,
+			})
+			return
+		}
+
+		response := []interface{}{}
+
+		for i := start; i < end; i++ {
+			response = append(response, cached[i])
+		}
+
 		ctx.JSON(200, gin.H{
-			"count": len(cached),
-			"data":  cached,
+			"pages":   pages,
+			"current": page,
+			"count":   len(cached),
+			"data":    response,
 		})
 		return
 	}
@@ -82,9 +117,10 @@ func feedback_handler(ctx *gin.Context) {
 	// TODO: Condition of paginator
 	if start >= len(cached) {
 		ctx.JSON(200, gin.H{
-			"pages": 1,
-			"count": len(cached),
-			"data":  cached,
+			"pages":   1,
+			"current": page,
+			"count":   len(cached),
+			"data":    cached,
 		})
 		return
 	}
@@ -96,8 +132,9 @@ func feedback_handler(ctx *gin.Context) {
 	}
 
 	ctx.JSON(200, gin.H{
-		"pages": pages,
-		"count": len(cached),
-		"data":  response,
+		"pages":   pages,
+		"current": page,
+		"count":   len(cached),
+		"data":    response,
 	})
 }
