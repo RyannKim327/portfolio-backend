@@ -1,6 +1,7 @@
 package get
 
 import (
+	"reflect"
 	"sync"
 	"time"
 
@@ -12,9 +13,8 @@ import (
 var (
 	CachedArrayContent []gin.H
 	CacheTTL           time.Time
-	CacheMU            sync.Mutex
+	CacheMU            sync.RWMutex
 	CachedDuration     = (5 * time.Minute)
-	NextRef            time.Time
 )
 
 var Feedback = utils.Route{
@@ -24,23 +24,41 @@ var Feedback = utils.Route{
 }
 
 func feedback_handler(ctx *gin.Context) {
-	CacheMU.Lock()
+	CacheMU.RLock()
 	cached := CachedArrayContent
-	now := time.Now()
+	valid := time.Now().Before(CacheTTL) && cached != nil
+	CacheMU.RUnlock()
 
-	if cached != nil || now.After(NextRef) {
-		data := utils.GistHandlerList("feedback.json")
-		utils.Reverse(data)
+	if valid {
+		go func(old []gin.H) {
+			data := utils.GistHandlerList("feedback.json")
+			utils.Reverse(data)
 
-		CachedArrayContent = data
-		NextRef = now.Add(CachedDuration)
+			if !reflect.DeepEqual(old, data) {
+				CacheMU.Lock()
+				CachedArrayContent = data
+				CacheTTL = time.Now().Add(CachedDuration)
+				CacheMU.Unlock()
+			}
+		}(cached)
+
+		ctx.JSON(200, gin.H{
+			"count": len(cached),
+			"data":  cached,
+		})
+		return
 	}
 
-	data := CachedArrayContent
+	data := utils.GistHandlerList("feedback.json")
+	utils.Reverse(data)
+
+	CacheMU.Lock()
+	CachedArrayContent = data
+	CacheTTL = time.Now().Add(CachedDuration)
 	CacheMU.Unlock()
 
 	ctx.JSON(200, gin.H{
-		"count": len(data),
-		"data":  data,
+		"count": len(cached),
+		"data":  cached,
 	})
 }
