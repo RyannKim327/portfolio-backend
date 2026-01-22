@@ -2,6 +2,7 @@ package get
 
 import (
 	"reflect"
+	"strconv"
 	"sync"
 	"time"
 
@@ -24,6 +25,15 @@ var Feedback = utils.Route{
 }
 
 func feedback_handler(ctx *gin.Context) {
+	page := 1
+	limit := 10
+
+	if ctx.Query("page") != "" {
+		if p, err := strconv.Atoi(ctx.Query("page")); err == nil && p > 0 {
+			page = p
+		}
+	}
+
 	CacheMU.RLock()
 	cached := CachedArrayContent
 	valid := time.Now().Before(CacheTTL) && cached != nil
@@ -57,8 +67,37 @@ func feedback_handler(ctx *gin.Context) {
 	CacheTTL = time.Now().Add(CachedDuration)
 	CacheMU.Unlock()
 
+	// TODO: This is just to add how many pages
+	pages := len(cached) / limit
+
+	if pages < page {
+		// TODO: To prevent out bound exception error
+		page = 1
+	}
+
+	// TODO: Start of pagination
+	start := limit * (page - 1)
+	end := start + limit
+
+	// TODO: Condition of paginator
+	if start >= len(cached) {
+		ctx.JSON(200, gin.H{
+			"pages": 1,
+			"count": len(cached),
+			"data":  cached,
+		})
+		return
+	}
+
+	response := []interface{}{}
+
+	for i := start; i < end; i++ {
+		response = append(response, cached[i])
+	}
+
 	ctx.JSON(200, gin.H{
+		"pages": pages,
 		"count": len(cached),
-		"data":  cached,
+		"data":  response,
 	})
 }
