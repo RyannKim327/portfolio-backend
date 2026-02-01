@@ -53,4 +53,21 @@ type (
 
 var CachedDuration = (5 * time.Minute)
 
+type TelegramResponse struct {
+	ChatID   string `json:"chat_id"`
+	Document string `json:"document"`
+}
+
+type TelegramAPI struct {
+	Response TelegramResponse
+	Error    error
+}
+
+type AccessTelegramAPI struct {
+	Method string
+	URL    string
+	Body   io.Reader
+	File   string
+}
+
 type BaybayinCharacters = map[string]int
