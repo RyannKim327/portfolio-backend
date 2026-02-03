@@ -1,10 +1,6 @@
 package post
 
 import (
-	"bytes"
-	"fmt"
-	"os"
-
 	"portfolio-backend/utils"
 
 	"github.com/gin-gonic/gin"
@@ -21,12 +17,15 @@ var UploadImage = utils.Route{
 }
 
 func uploadImage(ctx *gin.Context) {
-	expectedKey := os.Getenv("POST_API")
-	file_url := fmt.Sprintf("https://api.telegram.org/file/bot%s/sendPhoto", expectedKey)
+	// expectedKey := os.Getenv("POST_API")
+	// file_url := fmt.Sprintf("https://api.telegram.org/file/bot%s/sendPhoto", expectedKey)
 
-	resp := access(utils.AccessAPI{
-		Method: "POST",
-		URL:    file_url,
-		Body:   bytes.NewBuffer(jsonBody),
+	// resp := access(utils.AccessAPI{
+	// 	Method: "POST",
+	// 	URL:    file_url,
+	// 	Body:   bytes.NewBuffer(jsonBody),
+	// })
+	ctx.JSON(200, gin.H{
+		"from": "Hi",
 	})
 }
