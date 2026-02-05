@@ -68,7 +68,7 @@ func Register(routes utils.Route) {
 	routes.Path = strings.ToLower(routes.Path)
 
 	// TODO: To automatically add "/submit" in every required post requests
-	if method == strings.ToUpper(utils.METHOD_POST) && !strings.HasSuffix(routes.Path, "/submit") {
+	if method == strings.ToUpper(utils.METHOD_POST) && strings.ToUpper(routes.Permission) != utils.PERMISSION_ALL && !strings.HasSuffix(routes.Path, "/submit") {
 
 		// TODO: To prevent double slash in endpoints
 		if !strings.HasSuffix(routes.Path, "/") {
