@@ -2,6 +2,7 @@ package get
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 
 	utils "portfolio-backend/utils"
@@ -31,14 +32,20 @@ var Manga = utils.Route{
 func manga(ctx *gin.Context) {
 	search := ctx.Query("s")
 	read := ctx.Query("r")
+	chapter := ctx.Query("c")
 
 	if search != "" {
 		// TODO: Search Manga
 		ctx.JSON(200, manga_search(search))
+		return
 	} else if read != "" {
 		// TODO: Read Manga
-		manga_read(read)
+		ctx.JSON(200, manga_read(read, chapter))
+		return
 	}
+	ctx.JSON(404, gin.H{
+		"error": "Not found",
+	})
 }
 
 func manga_search(search string) gin.H {
@@ -73,5 +80,50 @@ func manga_search(search string) gin.H {
 	}
 }
 
-func manga_read(read string) {
+func manga_read(read string, chapter string) gin.H {
+	c := colly.NewCollector()
+
+	url := read
+	if strings.HasSuffix(read, "/") {
+		url = read[:len(read)-1]
+	}
+	split := strings.Split(url, "/")
+	last := ""
+
+	if len(split) > 0 {
+		last = split[len(split)-1]
+	}
+
+	s := fmt.Sprintf("manga/%s/chapter-%s/", last, chapter)
+
+	fmt.Println(s)
+	var response []string
+	var mu sync.Mutex
+
+	c.OnHTML("div.reading-content", func(e *colly.HTMLElement) {
+		// r := MangaSearchResponse{
+		// 	Title:    e.ChildAttr("a", "title"),
+		// 	Author:   e.ChildText("div.post-content_item.mg_author .summary-content"),
+		// 	CoverUrl: e.ChildAttr("img.img-responsive", "src"),
+		// 	Link:     e.ChildAttr("a", "href"),
+		// }
+
+		r := e.ChildAttr("img.wp-manga-chapter-img", "src")
+		fmt.Println(r)
+		mu.Lock()
+		response = e.ChildAttrs("img.wp-manga-chapter-img", "src") // append(response, r)
+		mu.Unlock()
+		// fmt.Println(element)
+	})
+
+	c.OnError(func(_ *colly.Response, err error) {
+		fmt.Println("Scrape Error", err)
+	})
+
+	c.Visit(fmt.Sprintf(URL, s))
+	c.Wait()
+
+	return gin.H{
+		"response": response,
+	}
 }
