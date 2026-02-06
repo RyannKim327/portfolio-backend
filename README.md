@@ -100,27 +100,32 @@ PORT=8000
 
 ### GET Endpoints
 
-| Endpoint | Description | Parameters | Permission |
-|----------|-------------|------------|------------|
-| `/` | Server status check | None | ALL |
-| `/projects` | Retrieve portfolio projects | None | ALL |
-| `/experiences` | Get work experiences | None | ALL |
-| `/feedback` | Retrieve feedback data | None | ALL |
-| `/poetry` | Get poetry collection | None | ALL |
-| `/baybayin` | Baybayin transliterator | `text` (query) | ALL |
-| `/set-cookie` | Set authentication cookie | None | ALL |
+| Endpoint | Description | Required Parameters | Optional Parameters | Permission |
+|----------|-------------|---------------------|---------------------|------------|
+| `/` | Server status check | None | None | ALL |
+| `/projects` | Retrieve portfolio projects | None | None | ALL |
+| `/experiences` | Get work experiences | None | None | ALL |
+| `/feedback` | Retrieve paginated feedback entries | None | `page` (integer ≥ 1, defaults to 1, 10 entries per page) | ALL |
+| `/poetry` | Get poetry collection | None | None | ALL |
+| `/baybayin` | Baybayin transliterator | `text` (query) | None | ALL |
+| `/images` | Proxy Telegram-hosted images | `file` (Telegram `file_id`) | None | ALL |
+| `/manga` | Manga search/reader utility | Either `s` (search query) or `r` (series slug) | `c` (chapter slug when reading) | ALL |
+| `/set-cookie` | Set authentication cookie | None | None | ALL |
 
 ### POST Endpoints
 
-| Endpoint | Description | Body Parameters | Permission |
-|----------|-------------|-----------------|------------|
-| `/feedback/submit` | Submit feedback | `name`, `email`, `message` | COOKIE |
-| `/poetry/submit` | Submit poetry | `title`, `content`, `author` | COOKIE |
-| `/ai/chat/submit` | AI chat interaction | `messages` (array) | ALL |
+| Endpoint | Description | Body/Input | Permission |
+|----------|-------------|-----------|------------|
+| `/feedback` | Submit feedback stored in Gist | JSON object with `name`, `email`, `message` | COOKIE |
+| `/poetry` | Submit poetry entry | JSON object with `title`, `content`, `author` | ADMIN |
+| `/ai/chat` | AI chat interaction powered by Pollinations | JSON object `{ "messages": [{ "role": "user|assistant", "content": "..." }] }` | ALL |
+| `/upload` | Upload image/document via Telegram bot | `multipart/form-data` with `image` file field | ADMIN |
 
-### Baybayin Transliterator
+#### GET /feedback
 
-**Endpoint:** `GET /baybayin`
+Pagination is controlled with the `page` query parameter (defaults to `1`). Each page returns up to 10 entries pulled from `feedback.json` in GitHub Gist. Results are cached for 5 minutes; requesting page 1 is the safest way to invalidate stale data quickly.
+
+#### GET /baybayin
 
 Converts Filipino text to Baybayin script using Unicode characters.
 
@@ -137,16 +142,39 @@ curl "http://localhost:8000/baybayin?text=kumusta ka"
 }
 ```
 
-### AI Chat Agent
+#### GET /manga
 
-**Endpoint:** `POST /ai/chat/submit`
+`GET /manga` works in three modes:
+
+1. **Search** – provide `s` to search by title.
+   ```bash
+   curl "http://localhost:8000/manga?s=one+piece"
+   ```
+2. **List chapters** – provide `r` with the manga slug to enumerate available chapters.
+   ```bash
+   curl "http://localhost:8000/manga?r=one-piece"
+   ```
+3. **Read a chapter** – provide both `r` (slug) and `c` (chapter identifier) to receive an array of page image URLs.
+   ```bash
+   curl "http://localhost:8000/manga?r=one-piece&c=chapter-1101"
+   ```
+
+#### GET /images
+
+Fetches Telegram-hosted files using the `file` query parameter (Telegram `file_id`). The endpoint proxies the binary content so it can be displayed directly in browsers without exposing Telegram credentials.
+
+```bash
+curl "http://localhost:8000/images?file=AgACAgUAAxkBAAIBQWdow"
+```
+
+#### POST /ai/chat
 
 Interact with an AI assistant powered by Pollinations AI.
 
 **Example Request:**
 ```bash
-curl -X POST http://localhost:8000/ai/chat/submit \
-  -H "Content-Type: application/json" \
+curl -X POST http://localhost:8000/ai/chat \\
+  -H "Content-Type: application/json" \\
   -d '{
     "messages": [
       {
@@ -164,6 +192,18 @@ curl -X POST http://localhost:8000/ai/chat/submit \
   "content": "Hello! I'm doing well, thank you for asking. How can I help you today?"
 }
 ```
+
+#### POST /upload
+
+Allows administrators to upload images/documents that will be relayed to the configured Telegram chat. Use `multipart/form-data` and provide the `image` field:
+
+```bash
+curl -X POST http://localhost:8000/upload \\
+  -H "Cookie: temporary=your-cookie" \\
+  -F "image=@/path/to/photo.jpg"
+```
+
+The API responds with the raw Telegram response payload, including the resulting `file_id` that can be used with `GET /images`.
 
 ## 🏗 Architecture
 
@@ -485,6 +525,19 @@ export APP_ENV=development
 - Request logs: Enabled by default in development mode
 
 ## 📝 Changelog
+
+### Version 1.3.0 - February 7, 2026
+
+Updates gathered from commits `231d625`, `886400b`, and `79880e1`.
+
+#### Added
+- **Manga utility endpoint** (`GET /manga`) that supports search, chapter listing, and inline chapter reading workflows.
+- **Telegram storage bridge** with `POST /upload` for administrators and `GET /images` for public consumption, enabling offloaded asset hosting.
+- **Expanded README endpoint matrix** covering required query/body parameters and usage examples for new routes.
+
+#### Changed
+- Documented the new pagination behaviour for `GET /feedback` and aligned API docs with the latest permission matrix.
+- Clarified AI chat usage to match the updated `/ai/chat` path and payload structure.
 
 ### Version 1.2.0 - January 19, 2026
 
