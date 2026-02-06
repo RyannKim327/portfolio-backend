@@ -19,7 +19,7 @@ var app = gin.Default()
 func CorsSetup() {
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"https://ryannkim327.is-a.dev"}, // "http://localhost:5173"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowMethods:     []string{"GET", "POST", "PATCH", "PUT", "DELETE"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
@@ -68,7 +68,7 @@ func Register(routes utils.Route) {
 	routes.Path = strings.ToLower(routes.Path)
 
 	// TODO: To automatically add "/submit" in every required post requests
-	if method == strings.ToUpper(utils.METHOD_POST) && !strings.HasSuffix(routes.Path, "/submit") {
+	if method == strings.ToUpper(utils.METHOD_POST) && strings.ToUpper(routes.Permission) != utils.PERMISSION_ALL && !strings.HasSuffix(routes.Path, "/submit") {
 
 		// TODO: To prevent double slash in endpoints
 		if !strings.HasSuffix(routes.Path, "/") {
