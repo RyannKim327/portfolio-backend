@@ -16,9 +16,10 @@ var Routes = []utils.Route{
 	get.Baybayin,
 	get.Experiences,
 	get.Feedback,
+	get.Manga,
+
 	get.Poetry,
 	get.Projects,
-	get.Manga,
 
 	// TODO: Created AI Endpoint
 	post.AIAgent,
