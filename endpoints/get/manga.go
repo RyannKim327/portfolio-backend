@@ -18,10 +18,17 @@ import (
 const URL = "https://www.mangaread.org/%s"
 
 type MangaSearchResponse struct {
-	Title    string `json:"title`
-	CoverUrl string `json:cover_url`
-	Author   string `json:author`
-	Link     string `json:link`
+	Title                string `json:"title"`
+	CoverUrl             string `json:"cover_url"`
+	Author               string `json:"author"`
+	Link                 string `json:"link"`
+	CurrentLatestChapter string `json:"current_last_chapter"`
+	Status               string `json:"status"`
+}
+
+type MangaChapters struct {
+	ChapterName string `json:"chapter_name"`
+	ChapterLink string `json:"chapter_link"`
 }
 
 var Manga = utils.Route{
@@ -38,7 +45,10 @@ func manga(ctx *gin.Context) {
 		// TODO: Search Manga
 		ctx.JSON(200, manga_search(search))
 		return
-	} else if read != "" {
+	} else if read != "" && chapter == "" {
+		ctx.JSON(200, check_chapters(read))
+		return
+	} else if read != "" && chapter != "" {
 		// TODO: Read Manga
 		ctx.JSON(200, manga_read(read, chapter))
 		return
@@ -55,21 +65,52 @@ func manga_search(search string) gin.H {
 	var mu sync.Mutex
 
 	c.OnHTML("div.row.c-tabs-item__content", func(e *colly.HTMLElement) {
+		chap := strings.Split(e.ChildText("div.meta-item.latest-chap span.font-meta.chapter"), " ")
+		link := strings.Split(e.ChildAttr("a", "href"), "/")
+
 		r := MangaSearchResponse{
-			Title:    e.ChildAttr("a", "title"),
-			Author:   e.ChildText("div.post-content_item.mg_author .summary-content"),
-			CoverUrl: e.ChildAttr("img.img-responsive", "src"),
-			Link:     e.ChildAttr("a", "href"),
+			Title:                e.ChildAttr("a", "title"),
+			Author:               e.ChildText("div.post-content_item.mg_author .summary-content"),
+			CoverUrl:             e.ChildAttr("img.img-responsive", "src"),
+			Link:                 link[len(link)-2],
+			CurrentLatestChapter: chap[1],
+			Status:               e.ChildText("div.post-content_item.mg_status div.summary-content"),
 		}
 
 		mu.Lock()
 		response = append(response, r)
 		mu.Unlock()
-		// fmt.Println(element)
 	})
 
 	c.OnError(func(_ *colly.Response, err error) {
 		fmt.Println("Scrape Error", err)
+	})
+
+	c.Visit(fmt.Sprintf(URL, s))
+	c.Wait()
+
+	return gin.H{
+		"response": response,
+	}
+}
+
+func check_chapters(manga string) gin.H {
+	c := colly.NewCollector()
+	s := fmt.Sprintf("manga/%s/", manga)
+
+	var mu sync.Mutex
+	var response []MangaChapters
+
+	c.OnHTML("li.wp-manga-chapter", func(e *colly.HTMLElement) {
+		link := strings.Split(e.ChildAttr("a", "href"), "/")
+		r := MangaChapters{
+			ChapterName: e.ChildText("li.wp-manga-chapter a"),
+			ChapterLink: link[len(link)-2],
+		}
+
+		mu.Lock()
+		response = append(response, r)
+		mu.Unlock()
 	})
 
 	c.Visit(fmt.Sprintf(URL, s))
@@ -94,26 +135,17 @@ func manga_read(read string, chapter string) gin.H {
 		last = split[len(split)-1]
 	}
 
-	s := fmt.Sprintf("manga/%s/chapter-%s/", last, chapter)
+	s := fmt.Sprintf("manga/%s/%s/", last, chapter)
 
-	fmt.Println(s)
 	var response []string
 	var mu sync.Mutex
 
 	c.OnHTML("div.reading-content", func(e *colly.HTMLElement) {
-		// r := MangaSearchResponse{
-		// 	Title:    e.ChildAttr("a", "title"),
-		// 	Author:   e.ChildText("div.post-content_item.mg_author .summary-content"),
-		// 	CoverUrl: e.ChildAttr("img.img-responsive", "src"),
-		// 	Link:     e.ChildAttr("a", "href"),
-		// }
-
 		r := e.ChildAttr("img.wp-manga-chapter-img", "src")
 		fmt.Println(r)
 		mu.Lock()
-		response = e.ChildAttrs("img.wp-manga-chapter-img", "src") // append(response, r)
+		response = e.ChildAttrs("img.wp-manga-chapter-img", "src")
 		mu.Unlock()
-		// fmt.Println(element)
 	})
 
 	c.OnError(func(_ *colly.Response, err error) {
