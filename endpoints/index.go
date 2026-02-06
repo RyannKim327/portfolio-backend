@@ -16,6 +16,7 @@ var Routes = []utils.Route{
 	get.Baybayin,
 	get.Experiences,
 	get.Feedback,
+	get.Image,
 	get.Manga,
 
 	get.Poetry,
@@ -27,6 +28,7 @@ var Routes = []utils.Route{
 	// TODO: POST Requests
 	post.Feedback,
 	post.Poetry,
+	post.UploadImage,
 
 	// TODO: Cookie Handler
 	get.Cookie,
