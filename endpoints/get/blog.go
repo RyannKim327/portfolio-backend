@@ -19,7 +19,7 @@ import (
 // )
 
 var Blog = utils.Route{
-	Path:    "/feedback",
+	Path:    "/blog",
 	Method:  utils.METHOD_GET,
 	Handler: blog_handler,
 }
