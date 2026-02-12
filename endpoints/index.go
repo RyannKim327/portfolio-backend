@@ -14,6 +14,7 @@ var Routes = []utils.Route{
 	// TODO: GET Requests
 	get.Index,
 	get.Baybayin,
+	get.Blog,
 	get.Experiences,
 	get.Feedback,
 	get.Image,
@@ -26,6 +27,7 @@ var Routes = []utils.Route{
 	post.AIAgent,
 
 	// TODO: POST Requests
+	// post.Blog,
 	post.Feedback,
 	post.Poetry,
 	post.UploadImage,
