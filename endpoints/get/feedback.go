@@ -124,7 +124,6 @@ func feedback_handler(ctx *gin.Context) {
 		})
 		return
 	}
-
 	response := []interface{}{}
 
 	for i := start; i < end; i++ {
