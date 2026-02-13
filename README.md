@@ -62,6 +62,8 @@ A comprehensive Go-based REST API backend designed to serve portfolio data throu
    API_KEY=your_github_personal_access_token
    GIST_ID=your_gist_id_for_data_storage
    POST_API=your_post_api_key
+   TG_API=your_telegram_bot_token
+   TG_CHATID=your_telegram_chat_or_channel_id
    PORT=8000
    ```
 
@@ -83,6 +85,8 @@ APP_ENV=development
 API_KEY=your_github_personal_access_token
 GIST_ID=your_gist_id_for_data_storage
 POST_API=your_post_api_key
+TG_API=your_telegram_bot_token
+TG_CHATID=your_telegram_chat_or_channel_id
 PORT=8000
 ```
 
@@ -93,8 +97,10 @@ PORT=8000
 | `APP_ENV` | Application environment (development/production) | Yes |
 | `API_KEY` | GitHub Personal Access Token for Gist API | Yes |
 | `GIST_ID` | GitHub Gist ID for data storage | Yes |
-| `POST_API` | API key for POST request validation | Yes |
-| `PORT` | Server port (defaults to 8000) | No |
+| `POST_API` | API key read by `X-API-Key` header for admin-only POST requests | Yes |
+| `TG_API` | Telegram bot token used for `/images` proxying and `/upload` relays | Yes |
+| `TG_CHATID` | Telegram chat/channel ID that receives uploaded media | Yes (for uploads) |
+| `PORT` | Server port (defaults to 8000 if unset) | No |
 
 ## 🌐 API Endpoints
 
@@ -105,6 +111,7 @@ PORT=8000
 | `/` | Server status check | None | None | ALL |
 | `/projects` | Retrieve portfolio projects | None | None | ALL |
 | `/experiences` | Get work experiences | None | None | ALL |
+| `/blog` | Retrieve latest blog entries from Gist | None | None | ALL |
 | `/feedback` | Retrieve paginated feedback entries | None | `page` (integer ≥ 1, defaults to 1, 10 entries per page) | ALL |
 | `/poetry` | Get poetry collection | None | None | ALL |
 | `/baybayin` | Baybayin transliterator | `text` (query) | None | ALL |
@@ -116,14 +123,35 @@ PORT=8000
 
 | Endpoint | Description | Body/Input | Permission |
 |----------|-------------|-----------|------------|
-| `/feedback` | Submit feedback stored in Gist | JSON object with `name`, `email`, `message` | COOKIE |
-| `/poetry` | Submit poetry entry | JSON object with `title`, `content`, `author` | ADMIN |
-| `/ai/chat` | AI chat interaction powered by Pollinations | JSON object `{ "messages": [{ "role": "user|assistant", "content": "..." }] }` | ALL |
-| `/upload` | Upload image/document via Telegram bot | `multipart/form-data` with `image` file field | ADMIN |
+| `/feedback/submit` | Submit feedback stored in Gist | JSON object with `name`, `email`, `message` | COOKIE (requires `temporary` cookie) |
+| `/poetry/submit` | Submit poetry entry | JSON object with `title`, `content`, `author` | ADMIN (`X-API-Key` header must equal `POST_API`) |
+| `/ai/chat` | AI chat interaction powered by Pollinations | JSON object `{ "messages": [{ "role": "user\|assistant", "content": "..." }] }` | ALL |
+| `/upload/submit` | Upload image/document via Telegram bot | `multipart/form-data` with `image` file field | ADMIN (`X-API-Key` + Telegram env vars) |
 
 #### GET /feedback
 
 Pagination is controlled with the `page` query parameter (defaults to `1`). Each page returns up to 10 entries pulled from `feedback.json` in GitHub Gist. Results are cached for 5 minutes; requesting page 1 is the safest way to invalidate stale data quickly.
+
+#### GET /blog
+
+Returns the complete list of blog entries stored in `blog.json` inside the GitHub Gist. The endpoint currently streams the whole dataset (no pagination) and always responds with the newest entry first because results are reversed before returning.
+
+```bash
+curl "http://localhost:8000/blog"
+```
+
+**Sample Response**
+```json
+{
+  "data": [
+    {
+      "title": "Building an API",
+      "tags": ["go", "gin"],
+      "excerpt": "..."
+    }
+  ]
+}
+```
 
 #### GET /baybayin
 
@@ -193,13 +221,13 @@ curl -X POST http://localhost:8000/ai/chat \\
 }
 ```
 
-#### POST /upload
+#### POST /upload/submit
 
-Allows administrators to upload images/documents that will be relayed to the configured Telegram chat. Use `multipart/form-data` and provide the `image` field:
+Allows administrators to upload images/documents that will be relayed to the configured Telegram chat. Use `multipart/form-data`, provide the `image` field, and include the `X-API-Key` header that matches `POST_API`:
 
 ```bash
-curl -X POST http://localhost:8000/upload \\
-  -H "Cookie: temporary=your-cookie" \\
+curl -X POST http://localhost:8000/upload/submit \\
+  -H "X-API-Key: $POST_API" \\
   -F "image=@/path/to/photo.jpg"
 ```
 
@@ -405,7 +433,7 @@ curl http://localhost:8000/
 curl "http://localhost:8000/baybayin?text=kumusta ka"
 
 # Test AI chat (POST request)
-curl -X POST http://localhost:8000/ai/chat/submit \
+curl -X POST http://localhost:8000/ai/chat \
   -H "Content-Type: application/json" \
   -d '{"messages":[{"role":"user","content":"Hello!"}]}'
 
@@ -439,6 +467,8 @@ APP_ENV=development go run index.go
    export API_KEY=your_production_github_token
    export GIST_ID=your_production_gist_id
    export POST_API=your_production_post_api_key
+   export TG_API=your_production_telegram_bot_token
+   export TG_CHATID=your_production_telegram_chat_id
    export PORT=8000
    ```
 
@@ -526,13 +556,24 @@ export APP_ENV=development
 
 ## 📝 Changelog
 
+### Version 1.3.1 - February 12, 2026
+
+Updates gathered from commit `5ae36f8`.
+
+#### Added
+- **Public blog endpoint** (`GET /blog`) re-registered so it is part of the router again and exposed through the API matrix.
+
+#### Changed
+- Simplified `GET /blog` handler to always return the full reversed list from `blog.json`, temporarily disabling the unfinished pagination cache to avoid stale data.
+- Re-enabled localhost (`http://localhost:5173`) as an allowed origin in the CORS middleware to unblock local frontend testing sessions.
+
 ### Version 1.3.0 - February 7, 2026
 
 Updates gathered from commits `231d625`, `886400b`, and `79880e1`.
 
 #### Added
 - **Manga utility endpoint** (`GET /manga`) that supports search, chapter listing, and inline chapter reading workflows.
-- **Telegram storage bridge** with `POST /upload` for administrators and `GET /images` for public consumption, enabling offloaded asset hosting.
+- **Telegram storage bridge** with `POST /upload/submit` for administrators and `GET /images` for public consumption, enabling offloaded asset hosting.
 - **Expanded README endpoint matrix** covering required query/body parameters and usage examples for new routes.
 
 #### Changed
