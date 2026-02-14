@@ -15,7 +15,7 @@ import (
  * TODO: This is just a template for the other endpoint
  */
 
-const URL = "https://www.mangaread.org/%s"
+const MANGA_URL = "https://www.mangaread.org/%s"
 
 type MangaSearchResponse struct {
 	Title                string `json:"title"`
@@ -86,11 +86,16 @@ func manga_search(search string) gin.H {
 		fmt.Println("Scrape Error", err)
 	})
 
-	c.Visit(fmt.Sprintf(URL, s))
+	c.Visit(fmt.Sprintf(MANGA_URL, s))
 	c.Wait()
 
+	if response != nil {
+		return gin.H{
+			"response": response,
+		}
+	}
 	return gin.H{
-		"response": response,
+		"error": fmt.Sprintf("Nothing found for %s", search),
 	}
 }
 
@@ -113,7 +118,7 @@ func check_chapters(manga string) gin.H {
 		mu.Unlock()
 	})
 
-	c.Visit(fmt.Sprintf(URL, s))
+	c.Visit(fmt.Sprintf(MANGA_URL, s))
 	c.Wait()
 
 	return gin.H{
@@ -152,7 +157,7 @@ func manga_read(read string, chapter string) gin.H {
 		fmt.Println("Scrape Error", err)
 	})
 
-	c.Visit(fmt.Sprintf(URL, s))
+	c.Visit(fmt.Sprintf(MANGA_URL, s))
 	c.Wait()
 
 	return gin.H{
