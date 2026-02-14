@@ -21,8 +21,9 @@ A comprehensive Go-based REST API backend designed to serve portfolio data throu
 
 - [Installation](#installation)
 - [Configuration](#configuration)
-- [API Endpoints](#api-endpoints)
-- [Architecture](#architecture)
+- [API Endpoints](#-api-endpoints)
+- [Documentation](#-documentation)
+- [Architecture](#-architecture)
 - [Development](#development)
 - [Testing](#testing)
 - [Deployment](#deployment)
@@ -104,126 +105,83 @@ PORT=8000
 
 ## 🌐 API Endpoints
 
-### GET Endpoints
+### Endpoint Matrix
 
-| Endpoint | Description | Required Parameters | Optional Parameters | Permission |
-|----------|-------------|---------------------|---------------------|------------|
-| `/` | Server status check | None | None | ALL |
-| `/projects` | Retrieve portfolio projects | None | None | ALL |
-| `/experiences` | Get work experiences | None | None | ALL |
-| `/blog` | Retrieve latest blog entries from Gist | None | None | ALL |
-| `/feedback` | Retrieve paginated feedback entries | None | `page` (integer ≥ 1, defaults to 1, 10 entries per page) | ALL |
-| `/poetry` | Get poetry collection | None | None | ALL |
-| `/baybayin` | Baybayin transliterator | `text` (query) | None | ALL |
-| `/images` | Proxy Telegram-hosted images | `file` (Telegram `file_id`) | None | ALL |
-| `/manga` | Manga search/reader utility | Either `s` (search query) or `r` (series slug) | `c` (chapter slug when reading) | ALL |
-| `/set-cookie` | Set authentication cookie | None | None | ALL |
+| Method | Path | Permission | Description | Notes |
+|--------|------|------------|-------------|-------|
+| GET | `/` | ALL | Health/status probe | Returns application metadata and uptime markers. |
+| GET | `/projects` | ALL | Portfolio project listing | Reads from GitHub Gist; cached for 60s. |
+| GET | `/experiences` | ALL | Work experience timeline | Sorted chronologically before response. |
+| GET | `/blog` | ALL | Blog feed | Streams entire `blog.json`, newest-first. |
+| GET | `/feedback` | ALL | Public feedback viewer | Supports pagination via `page` query (10/page). |
+| GET | `/poetry` | ALL | Poetry collection | Mirrors the curated poetry list from Gist. |
+| GET | `/baybayin` | ALL | Baybayin transliterator | Requires `text` query; returns Unicode script. |
+| GET | `/images` | ALL | Telegram CDN proxy | Requires `file` (Telegram `file_id`). |
+| GET | `/manga` | ALL | Manga helper utility | Use `s` for search, `r` for series, `c` for chapter. |
+| GET | `/set-cookie` | ALL | Issues temporary cookie | Seeds `temporary` cookie for POST access. |
+| POST | `/feedback/submit` | COOKIE | Stores feedback via Gist | Needs `temporary` cookie + JSON body. |
+| POST | `/poetry/submit` | ADMIN | Publishes new poem entries | Requires `X-API-Key` header (matches `POST_API`). |
+| POST | `/ai/chat` | ALL | Pollinations chat relay | Accepts ChatGPT-style message arrays. |
+| POST | `/upload/submit` | ADMIN | Telegram upload bridge | `multipart/form-data` with `image` field. |
 
-### POST Endpoints
-
-| Endpoint | Description | Body/Input | Permission |
-|----------|-------------|-----------|------------|
-| `/feedback/submit` | Submit feedback stored in Gist | JSON object with `name`, `email`, `message` | COOKIE (requires `temporary` cookie) |
-| `/poetry/submit` | Submit poetry entry | JSON object with `title`, `content`, `author` | ADMIN (`X-API-Key` header must equal `POST_API`) |
-| `/ai/chat` | AI chat interaction powered by Pollinations | JSON object `{ "messages": [{ "role": "user\|assistant", "content": "..." }] }` | ALL |
-| `/upload/submit` | Upload image/document via Telegram bot | `multipart/form-data` with `image` file field | ADMIN (`X-API-Key` + Telegram env vars) |
+### Endpoint Details
 
 #### GET /feedback
+- **Pagination**: `page` query (≥ 1, default `1`).
+- **Cache**: Responses cached for 5 minutes; requesting page `1` invalidates the cache first.
+- **Storage**: Reads `feedback.json` from the configured GitHub Gist.
 
-Pagination is controlled with the `page` query parameter (defaults to `1`). Each page returns up to 10 entries pulled from `feedback.json` in GitHub Gist. Results are cached for 5 minutes; requesting page 1 is the safest way to invalidate stale data quickly.
+```bash
+curl "http://localhost:8000/feedback?page=2"
+```
 
 #### GET /blog
-
-Returns the complete list of blog entries stored in `blog.json` inside the GitHub Gist. The endpoint currently streams the whole dataset (no pagination) and always responds with the newest entry first because results are reversed before returning.
+- **Payload**: Always returns the whole list stored inside `blog.json` (no pagination yet).
+- **Ordering**: Newest entries appear first by reversing the list in-memory.
 
 ```bash
 curl "http://localhost:8000/blog"
 ```
 
-**Sample Response**
-```json
-{
-  "data": [
-    {
-      "title": "Building an API",
-      "tags": ["go", "gin"],
-      "excerpt": "..."
-    }
-  ]
-}
-```
-
 #### GET /baybayin
+- **Usage**: Converts Latin text to Baybayin script using Unicode glyphs and normalization.
+- **Tip**: Strip punctuation on the client side for best transliteration accuracy.
 
-Converts Filipino text to Baybayin script using Unicode characters.
-
-**Example Request:**
 ```bash
-curl "http://localhost:8000/baybayin?text=kumusta ka"
-```
-
-**Example Response:**
-```json
-{
-  "original": "kumusta ka",
-  "response": "ᜃᜓᜋᜓᜐ᜔ᜆ ᜃ"
-}
+curl "http://localhost:8000/baybayin?text=kumusta%20ka"
 ```
 
 #### GET /manga
-
-`GET /manga` works in three modes:
-
-1. **Search** – provide `s` to search by title.
-   ```bash
-   curl "http://localhost:8000/manga?s=one+piece"
-   ```
-2. **List chapters** – provide `r` with the manga slug to enumerate available chapters.
-   ```bash
-   curl "http://localhost:8000/manga?r=one-piece"
-   ```
-3. **Read a chapter** – provide both `r` (slug) and `c` (chapter identifier) to receive an array of page image URLs.
-   ```bash
-   curl "http://localhost:8000/manga?r=one-piece&c=chapter-1101"
-   ```
+`GET /manga` is a multi-mode helper around a third-party manga source:
+1. **Search** – `?s=<title>` to get matching series metadata.
+2. **Chapter List** – `?r=<series-slug>` to enumerate chapters.
+3. **Chapter Pages** – `?r=<series-slug>&c=<chapter-id>` to receive page image URLs.
 
 #### GET /images
-
-Fetches Telegram-hosted files using the `file` query parameter (Telegram `file_id`). The endpoint proxies the binary content so it can be displayed directly in browsers without exposing Telegram credentials.
+- **Input**: `file` query takes a Telegram `file_id` returned by `/upload/submit`.
+- **Behaviour**: The backend downloads the file via Telegram Bot API and streams it to the caller, masking bot credentials.
 
 ```bash
 curl "http://localhost:8000/images?file=AgACAgUAAxkBAAIBQWdow"
 ```
 
 #### POST /ai/chat
+- **Body**: Chat-style payload with `messages` array.
+- **Timeouts**: Requests are proxied to Pollinations AI; keep payloads compact to avoid upstream limits.
 
-Interact with an AI assistant powered by Pollinations AI.
-
-**Example Request:**
 ```bash
 curl -X POST http://localhost:8000/ai/chat \\
   -H "Content-Type: application/json" \\
   -d '{
     "messages": [
-      {
-        "role": "user",
-        "content": "Hello, how are you?"
-      }
+      {"role": "user", "content": "Hello, how are you?"}
     ]
   }'
 ```
 
-**Example Response:**
-```json
-{
-  "role": "assistant",
-  "content": "Hello! I'm doing well, thank you for asking. How can I help you today?"
-}
-```
-
 #### POST /upload/submit
-
-Allows administrators to upload images/documents that will be relayed to the configured Telegram chat. Use `multipart/form-data`, provide the `image` field, and include the `X-API-Key` header that matches `POST_API`:
+- **Security**: Requires both `X-API-Key` header (`POST_API`) and valid Telegram env vars.
+- **Response**: Forwards Telegram's JSON payload, including the generated `file_id` for re-use with `/images`.
 
 ```bash
 curl -X POST http://localhost:8000/upload/submit \\
@@ -231,61 +189,106 @@ curl -X POST http://localhost:8000/upload/submit \\
   -F "image=@/path/to/photo.jpg"
 ```
 
-The API responds with the raw Telegram response payload, including the resulting `file_id` that can be used with `GET /images`.
+## 📚 Documentation
+
+The README doubles as the living reference, but the project ships with several complementary documentation touchpoints:
+
+### Source-of-Truth Artifacts
+- **Route metadata**: Each handler exports a `utils.Route` definition under `endpoints/get` or `endpoints/post`, making it easy to inspect path, method, and permission levels directly in code.
+- **Environment reference**: `.env` (sample) plus the [Configuration](#-configuration) section lists every supported variable.
+- **Middleware contracts**: `middleware/` contains concise, self-documented functions that describe headers, cookies, and permission checks.
+
+### How to Explore the API
+1. **Go Doc** – run `go doc ./...` to generate inline package documentation for handlers, middleware, and utilities.
+2. **cURL/HTTP collections** – the snippets in this README can be pasted into REST clients (Hoppscotch, Thunder Client, Postman) for quick smoke tests.
+3. **Ad-hoc OpenAPI** – if you maintain a `docs/openapi.yaml`, regenerate it after adding routes by iterating through the `utils.Route` list; the structure was designed with spec generation in mind.
+
+### Keeping Docs Updated
+- Update tables under [API Endpoints](#-api-endpoints) whenever a handler is added/changed.
+- Keep diagrams (Mermaid) in the [Architecture](#-architecture) section synchronized with actual dependencies (Gist, Telegram, Pollinations, cache).
+- Mention schema or payload tweaks in the [Changelog](#changelog) so clients know when to adapt.
 
 ## 🏗 Architecture
+
+### System Overview
+- **Gin Router**: Terminates HTTP traffic, applies CORS/default headers, and dispatches into the routing matrix declared in `endpoints/`.
+- **Permission Tier**: Unified middleware enforces `ALL`, `COOKIE`, or `ADMIN` access levels before any handler executes business logic.
+- **Handler Layer**: Consolidates response shaping, cache orchestration, and fan-out to third-party services such as GitHub Gist, Pollinations AI, and Telegram Bot API.
+- **Caching**: Lightweight in-memory cache reduces duplicate reads from Gist for hotspots like `/projects` and `/feedback`.
+- **Utility Processors**: Baybayin transliteration, manga helpers, and other local processors live in `utils/` to keep handlers thin.
 
 ### System Architecture
 
 ```mermaid
 flowchart TD
-    A[Client Request] --> B[Gin Router]
-    B --> C{Permission Check}
-    C -->|ALL| D[Handler Function]
+    A[Client Apps<br/>(Web, Mobile, CLI)] --> B[Gin Router]
+    B --> C{Permission Tier}
+    C -->|ALL| D[Handlers]
     C -->|COOKIE| E[Cookie Middleware]
     C -->|ADMIN| F[Admin Middleware]
     E --> D
     F --> D
-    D --> G{Data Source}
-    G -->|Static| H[Local Processing]
-    G -->|Dynamic| I[GitHub Gist API]
-    G -->|AI| J[Pollinations AI API]
-    H --> K[JSON Response]
-    I --> K
-    J --> K
-    K --> L[Client Response]
+    D --> G{Cache Hit?}
+    G -->|Yes| Q[JSON Response]
+    G -->|No| H{Data Source}
+    H -->|Portfolio & Content| I[GitHub Gist API]
+    H -->|AI Chat| J[Pollinations AI]
+    H -->|Media Bridge| K[Telegram Bot API]
+    H -->|Local Ops| L[In-memory processors
+(Baybayin, Manga, etc.)]
+    I --> M[Normalizer + Cache Writer]
+    J --> M
+    K --> M
+    L --> M
+    M --> Q
+    Q --> N[Client Response]
 ```
+
+### Component Responsibilities
+
+| Component | Responsibility | Notes |
+|-----------|----------------|-------|
+| Router (`index.go`) | Initializes Gin, mounts middleware, and registers routes | Uses `utils.Route` definitions for discoverability |
+| Middleware (`middleware/`) | Handles headers, cookies, permission gating, and request logging | Central place to add observability or rate limiting |
+| Handlers (`endpoints/`) | Business logic, payload binding, and response formatting | Should remain stateless apart from cache access |
+| Cache Layer | Stores pre-rendered JSON for hot endpoints | TTL tuned per endpoint (e.g., 5 minutes for `/feedback`) |
+| External Services | GitHub Gist for storage, Pollinations AI for chat, Telegram Bot API for uploads/images | Isolated via `utils` helpers for easier swapping |
+| Utilities (`utils/`) | Shared structs, Gist helpers, Baybayin transliterator, static constants | Keeps handlers DRY and enforces consistent responses |
 
 ### Project Structure
 
 ```mermaid
 flowchart LR
-    A[portfolio-backend] --> B[endpoints/]
+    A[portfolio-backend]
+    A --> B[endpoints/]
     A --> C[middleware/]
     A --> D[utils/]
     A --> E[index.go]
+    A --> F[.air.toml]
+    A --> G[tmp/]
     
-    B --> F[get/]
-    B --> G[post/]
-    B --> H[index.go]
+    B --> B1[get/]
+    B --> B2[post/]
+    B --> B3[index.go]
+    B1 --> B1a[projects.go]
+    B1 --> B1b[experiences.go]
+    B1 --> B1c[baybayin.go]
+    B1 --> B1d[feedback.go]
+    B1 --> B1e[poetry.go]
+    B2 --> B2a[post_feedback.go]
+    B2 --> B2b[post_poetry.go]
+    B2 --> B2c[ai_agent.go]
     
-    F --> I[projects.go]
-    F --> J[experiences.go]
-    F --> K[baybayin.go]
-    F --> L[feedback.go]
-    F --> M[poetry.go]
+    C --> C1[server_handler.go]
+    C --> C2[headers.go]
+    C --> C3[cookie_handler.go]
+    C --> C4[post_request.go]
     
-    G --> N[post_feedback.go]
-    G --> O[post_poetry.go]
-    G --> P[ai_agent.go]
-    
-    C --> Q[server_handler.go]
-    C --> R[headers.go]
-    C --> S[cookie_handler.go]
-    
-    D --> T[structures.go]
-    D --> U[gist_handler.go]
-    D --> V[statics.go]
+    D --> D1[structures.go]
+    D --> D2[gist_handler.go]
+    D --> D3[gist.go]
+    D --> D4[statics.go]
+    D --> D5[tools.go]
 ```
 
 ### Request Flow
@@ -296,24 +299,29 @@ sequenceDiagram
     participant R as Router
     participant M as Middleware
     participant H as Handler
+    participant Cache as Cache Layer
     participant G as GitHub Gist
-    participant AI as AI Service
+    participant T as Telegram API
+    participant AI as Pollinations AI
+    participant L as Local Services
 
     C->>R: HTTP Request
-    R->>M: Route to Middleware
-    M->>M: Check Permissions
-    M->>H: Forward to Handler
-    
-    alt Data Request
-        H->>G: Fetch from Gist
-        G->>H: Return Data
-    else AI Request
-        H->>AI: Send to AI Service
-        AI->>H: Return Response
-    else Static Processing
-        H->>H: Process Locally
+    R->>M: Route + attach metadata
+    M->>H: Enforce permissions & forward
+    H->>Cache: Lookup composite cache key
+    alt Cache Hit
+        Cache-->>H: Cached payload
+    else Cache Miss
+        H->>G: Fetch portfolio/feedback data
+        H->>AI: Proxy chat payloads
+        H->>T: Relay uploads/fetch images
+        H->>L: Execute Baybayin/manga helpers
+        G-->>H: JSON blobs
+        AI-->>H: AI responses
+        T-->>H: Telegram payloads
+        L-->>H: Processed data
+        H-->>Cache: Store normalized response
     end
-    
     H->>C: JSON Response
 ```
 
@@ -556,6 +564,19 @@ export APP_ENV=development
 
 ## 📝 Changelog
 
+### Version 1.3.2 - February 14, 2026
+
+Documentation-focused release.
+
+#### Added
+- Documentation section explaining where to find canonical references (routes, env vars, middleware) and how to explore the API.
+- Component responsibilities matrix in the architecture chapter for quicker onboarding.
+
+#### Changed
+- API endpoint matrix now highlights permissions, data sources, and cache behaviour.
+- Architecture diagrams upgraded with cache-awareness plus external integrations (GitHub Gist, Pollinations AI, Telegram API).
+- README acknowledgement now mentions Qodo assistance for documentation and code review.
+
 ### Version 1.3.1 - February 12, 2026
 
 Updates gathered from commit `5ae36f8`.
@@ -689,6 +710,7 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 - [GitHub Gist API](https://docs.github.com/en/rest/gists) for data storage solution
 - [GoDotEnv](https://github.com/joho/godotenv) for environment variable management
 - [Gin CORS](https://github.com/gin-contrib/cors) for Cross-Origin Resource Sharing support
+- **[Qodo Command](https://github.com/qodo-ai)** for documentation assistance and automated code review feedback
 
 ---
 
