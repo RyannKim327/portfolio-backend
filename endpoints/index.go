@@ -19,7 +19,6 @@ var Routes = []utils.Route{
 	get.Feedback,
 	get.Image,
 	get.Manga,
-
 	get.Poetry,
 	get.Projects,
 

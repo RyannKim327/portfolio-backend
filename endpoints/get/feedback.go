@@ -12,10 +12,10 @@ import (
 )
 
 var (
-	CachedArrayContent []gin.H
-	CacheTTL           time.Time
-	CacheMU            sync.RWMutex
-	CachedDuration     = (5 * time.Minute)
+	FeedbackCachedArrayContent []gin.H
+	FeedbackCacheTTL           time.Time
+	FeedbackCacheMU            sync.RWMutex
+	FeedbackCachedDuration     = (5 * time.Minute)
 )
 
 var Feedback = utils.Route{
@@ -34,10 +34,10 @@ func feedback_handler(ctx *gin.Context) {
 		}
 	}
 
-	CacheMU.RLock()
-	cached := CachedArrayContent
-	valid := time.Now().Before(CacheTTL) && cached != nil
-	CacheMU.RUnlock()
+	FeedbackCacheMU.RLock()
+	cached := FeedbackCachedArrayContent
+	valid := time.Now().Before(FeedbackCacheTTL) && cached != nil
+	FeedbackCacheMU.RUnlock()
 
 	if valid {
 		go func(old []gin.H) {
@@ -45,10 +45,10 @@ func feedback_handler(ctx *gin.Context) {
 			utils.Reverse(data)
 
 			if !reflect.DeepEqual(old, data) {
-				CacheMU.Lock()
-				CachedArrayContent = data
-				CacheTTL = time.Now().Add(CachedDuration)
-				CacheMU.Unlock()
+				FeedbackCacheMU.Lock()
+				FeedbackCachedArrayContent = data
+				FeedbackCacheTTL = time.Now().Add(FeedbackCachedDuration)
+				FeedbackCacheMU.Unlock()
 			}
 		}(cached)
 
@@ -97,10 +97,10 @@ func feedback_handler(ctx *gin.Context) {
 	data := utils.GistHandlerList("feedback.json")
 	utils.Reverse(data)
 
-	CacheMU.Lock()
-	CachedArrayContent = data
-	CacheTTL = time.Now().Add(CachedDuration)
-	CacheMU.Unlock()
+	FeedbackCacheMU.Lock()
+	FeedbackCachedArrayContent = data
+	FeedbackCacheTTL = time.Now().Add(FeedbackCachedDuration)
+	FeedbackCacheMU.Unlock()
 
 	// TODO: This is just to add how many pages
 	pages := len(cached) / limit
@@ -115,7 +115,7 @@ func feedback_handler(ctx *gin.Context) {
 	end := start + limit
 
 	// TODO: Condition of paginator
-	if start >= len(cached) {
+	if start >= len(cached) && cached != nil {
 		ctx.JSON(200, gin.H{
 			"pages":   1,
 			"current": page,
@@ -124,16 +124,20 @@ func feedback_handler(ctx *gin.Context) {
 		})
 		return
 	}
-	response := []interface{}{}
+	response := []gin.H{}
 
-	for i := start; i < end; i++ {
-		response = append(response, cached[i])
+	if len(cached) > 0 {
+		for i := start; i < end; i++ {
+			response = append(response, cached[i])
+		}
+	} else {
+		response = data
 	}
 
 	ctx.JSON(200, gin.H{
 		"pages":   pages,
 		"current": page,
-		"count":   len(cached),
+		"count":   len(response),
 		"data":    response,
 	})
 }
