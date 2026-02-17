@@ -83,8 +83,8 @@ func aiagent(ctx *gin.Context) {
 	choices, ok := apiResponse["choices"].([]interface{})
 
 	if !ok || len(choices) <= 0 {
-		ctx.JSON(500, gin.H {
-			"error": "Invalid API response"
+		ctx.JSON(500, gin.H{
+			"error": "Invalid API response",
 		})
 		return
 	}
@@ -92,16 +92,16 @@ func aiagent(ctx *gin.Context) {
 	choice, ok := choices[0].(map[string]interface{})
 
 	if !ok || len(choices) <= 0 {
-		ctx.JSON(500, gin.H {
-			"error": "Invalid API response"
+		ctx.JSON(500, gin.H{
+			"error": "Invalid API response",
 		})
 		return
 	}
 
 	message, ok := choice["message"].(map[string]interface{})
 	if !ok || len(choices) <= 0 {
-		ctx.JSON(500, gin.H {
-			"error": "Invalid API response"
+		ctx.JSON(500, gin.H{
+			"error": "Invalid API response",
 		})
 		return
 	}
