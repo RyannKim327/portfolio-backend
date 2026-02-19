@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"regexp"
 
 	"portfolio-backend/utils"
 
@@ -106,8 +107,18 @@ func aiagent(ctx *gin.Context) {
 		return
 	}
 
+	content := message["content"]
+
+	pattern := `---\n\n\*Support Pollinations\.AI:\*\n\n---\n\n🌸 \*Ad\* 🌸\nPowered by Pollinations\.AI free text APIs\. \[Support our mission\]\(https:\/\/pollinations\.ai\/redirect\/kofi\) to keep AI accessible for everyone\.`
+
+	re := regexp.MustCompile(pattern)
+
+	str, _ := content.(string)
+
+	clean := re.ReplaceAllString(str, "")
+
 	ctx.JSON(200, gin.H{
 		"role":    message["role"],
-		"content": message["content"],
+		"content": clean,
 	})
 }
