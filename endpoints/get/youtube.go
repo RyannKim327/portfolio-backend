@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"regexp"
 
 	"portfolio-backend/utils"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gocolly/colly/v2"
 )
 
 const URL = "https://v2.ytmp3.wtf/%s"
@@ -28,40 +28,20 @@ var Youtube = utils.Route{
 }
 
 func matcher(ytUrl string) string {
-	shareVideoFormat := regexp.MustCompile(`youtu\.be/[A-Za-z0-9_-]{11}`)
-	linkVideoFormat := regexp.MustCompile(`youtube\.com/watch\?v=[A-Za-z0-9_-]{11}`)
+	// TODO: To filter the link and to extract only the video ID
+	shareVideoFormat := regexp.MustCompile(`youtu\.be/([A-Za-z0-9_-]{11})`)
+	linkVideoFormat := regexp.MustCompile(`youtube\.com/watch\?v=([A-Za-z0-9_-]{11})`)
 
 	matchShare := shareVideoFormat.FindStringSubmatch(ytUrl)
 	matchLink := linkVideoFormat.FindStringSubmatch(ytUrl)
-	if len(matchShare) > 1 {
+
+	if len(matchShare) >= 1 {
 		return matchShare[1]
-	} else if len(matchLink) > 1 {
+	} else if len(matchLink) >= 1 {
 		return matchLink[1]
 	} else {
 		return ytUrl
 	}
-}
-
-func ytToken(url string) string {
-	c := colly.NewCollector()
-	xURL := fmt.Sprintf("button/?url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3D%s", url)
-
-	c.OnRequest(func(r *colly.Request) {
-		r.Headers.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:144.0) Gecko/20100101 Firefox/144.0")
-	})
-
-	c.OnHTML("script", func(e *colly.HTMLElement) {
-		fmt.Println(e.Text)
-	})
-
-	c.OnError(func(_ *colly.Response, err error) {
-		fmt.Println("Scrape Error", err)
-	})
-
-	c.Visit(fmt.Sprintf(URL, xURL))
-	c.Wait()
-
-	return ""
 }
 
 func youtube(ctx *gin.Context) {
@@ -77,13 +57,12 @@ func youtube(ctx *gin.Context) {
 
 	videoID := matcher(videoId)
 
-	fmt.Printf(videoID)
-	url := fmt.Sprintf(
+	url_ := fmt.Sprintf(
 		"https://youtube-mp36.p.rapidapi.com/dl?id=%s",
 		videoID,
 	)
 
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", url_, nil)
 	if err != nil {
 		ctx.JSON(200, gin.H{
 			"error": err,
@@ -121,19 +100,23 @@ func youtube(ctx *gin.Context) {
 		return
 	}
 
-	// ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.mp3\"", "audio"))
-	// ctx.Header("Content-Type", "audio/mpeg")
-
-	// io.Copy(ctx.Writer, resp.Body)
 	re := regexp.MustCompile(`n=([^&]+)`)
 	matches := re.FindStringSubmatch(result.Link)
 
 	if len(matches) < 2 {
-		fmt.Println("No title found in link")
+		ctx.JSON(200, gin.H{
+			"error": "No title found",
+		})
 		return
 	}
 
-	title := matches[1]
+	title, err := url.QueryUnescape(matches[1])
+	if err != nil {
+		ctx.JSON(200, gin.H{
+			"error": err,
+		})
+		return
+	}
 
 	ctx.JSON(200, gin.H{
 		"message": "Done",
