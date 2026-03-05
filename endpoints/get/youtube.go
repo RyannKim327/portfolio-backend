@@ -3,9 +3,10 @@ package get
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"os"
 	"regexp"
-	"strings"
 
 	"portfolio-backend/utils"
 
@@ -14,6 +15,11 @@ import (
 )
 
 const URL = "https://v2.ytmp3.wtf/%s"
+
+type Response struct {
+	// adjust fields based on actual API response
+	Link string `json:"link"`
+}
 
 var Youtube = utils.Route{
 	Path:    "yt",
@@ -61,6 +67,7 @@ func ytToken(url string) string {
 func youtube(ctx *gin.Context) {
 	// TODO: To get the parameters
 	videoId := ctx.Query("videoID")
+
 	if videoId == "" {
 		ctx.JSON(400, gin.H{
 			"error": "videoID is required as parameter",
@@ -70,56 +77,67 @@ func youtube(ctx *gin.Context) {
 
 	videoID := matcher(videoId)
 
-	tokenizer := ytToken(videoID)
+	fmt.Printf(videoID)
+	url := fmt.Sprintf(
+		"https://youtube-mp36.p.rapidapi.com/dl?id=%s",
+		videoID,
+	)
 
-	fmt.Println(tokenizer)
-	body := strings.NewReader(fmt.Sprintf(`
-		{
-			"url": "https://youtube.com/watch?v=%s",
-			"convert": "gogogo",
-			"token": "t_58bdf31e8ed7a1fcf2dedcfb7d7c881a424e1051130b21cb2ddf6b44a8caec04",
-			"token_validto": "99999999999"
-		}
-	`, &videoID))
-
-	// TODO: To initiate request
-	req, err := http.NewRequest("POST", fmt.Sprintf(URL, "convert"), body)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		ctx.JSON(400, gin.H{
+		ctx.JSON(200, gin.H{
 			"error": err,
 		})
 		return
 	}
 
-	// TODO: Request Executor
+	req.Header.Add("x-rapidapi-key", os.Getenv("RAPIDKEY"))
+	req.Header.Add("x-rapidapi-host", os.Getenv("RAPIDHOST"))
+
 	client := &http.Client{}
 	resp, err := client.Do(req)
-	// TODO: To prevent errors
 	if err != nil {
-		ctx.JSON(400, gin.H{
+		ctx.JSON(200, gin.H{
 			"error": err,
 		})
 		return
 	}
-
 	defer resp.Body.Close()
 
-	if resp.StatusCode >= 400 {
-		ctx.JSON(400, gin.H{
-			"error": "Something went wrong",
-			"code":  resp.StatusCode,
-		})
-		return
-	}
-
-	// TODO: To send the response data
-	var data gin.H
-	err = json.NewDecoder(resp.Body).Decode(&data)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		ctx.JSON(500, gin.H{
+		ctx.JSON(200, gin.H{
 			"error": err,
 		})
 		return
 	}
-}
 
+	var result Response
+	err = json.Unmarshal(body, &result)
+	if err != nil {
+		ctx.JSON(200, gin.H{
+			"error": err,
+		})
+		return
+	}
+
+	// ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.mp3\"", "audio"))
+	// ctx.Header("Content-Type", "audio/mpeg")
+
+	// io.Copy(ctx.Writer, resp.Body)
+	re := regexp.MustCompile(`n=([^&]+)`)
+	matches := re.FindStringSubmatch(result.Link)
+
+	if len(matches) < 2 {
+		fmt.Println("No title found in link")
+		return
+	}
+
+	title := matches[1]
+
+	ctx.JSON(200, gin.H{
+		"message": "Done",
+		"title":   title,
+		"url":     result.Link,
+	})
+}

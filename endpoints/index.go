@@ -21,7 +21,7 @@ var Routes = []utils.Route{
 	get.Manga,
 	get.Poetry,
 	get.Projects,
-	// get.Youtube,
+	get.Youtube,
 
 	// TODO: Created AI Endpoint
 	post.AIAgent,
