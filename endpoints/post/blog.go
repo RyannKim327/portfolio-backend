@@ -42,7 +42,7 @@ func blog(ctx *gin.Context) {
 	}
 
 	newBody := gin.H{
-		"id":      maxID,
+		"id":      maxID + 1,
 		"title":   body["title"].(string),
 		"content": body["content"].(string),
 		"tags":    body["tags"],
