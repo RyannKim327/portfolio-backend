@@ -65,6 +65,8 @@ A comprehensive Go-based REST API backend designed to serve portfolio data throu
    POST_API=your_post_api_key
    TG_API=your_telegram_bot_token
    TG_CHATID=your_telegram_chat_or_channel_id
+   RAPIDKEY=your_rapidapi_key
+   RAPIDHOST=youtube-mp36.p.rapidapi.com
    PORT=8000
    ```
 
@@ -88,6 +90,8 @@ GIST_ID=your_gist_id_for_data_storage
 POST_API=your_post_api_key
 TG_API=your_telegram_bot_token
 TG_CHATID=your_telegram_chat_or_channel_id
+RAPIDKEY=your_rapidapi_key
+RAPIDHOST=youtube-mp36.p.rapidapi.com
 PORT=8000
 ```
 
@@ -99,8 +103,10 @@ PORT=8000
 | `API_KEY` | GitHub Personal Access Token for Gist API | Yes |
 | `GIST_ID` | GitHub Gist ID for data storage | Yes |
 | `POST_API` | API key read by `X-API-Key` header for admin-only POST requests | Yes |
-| `TG_API` | Telegram bot token used for `/images` proxying and `/upload` relays | Yes |
+| `TG_API` | Telegram bot token used for `/images` proxying and `/upload` relays | Yes (for images/uploads) |
 | `TG_CHATID` | Telegram chat/channel ID that receives uploaded media | Yes (for uploads) |
+| `RAPIDKEY` | RapidAPI key used by `/yt` | Yes (for `/yt`) |
+| `RAPIDHOST` | RapidAPI host used by `/yt` (e.g. `youtube-mp36.p.rapidapi.com`) | Yes (for `/yt`) |
 | `PORT` | Server port (defaults to 8000 if unset) | No |
 
 ## 🌐 API Endpoints
@@ -116,13 +122,14 @@ PORT=8000
 | GET | `/feedback` | ALL | Public feedback viewer | Supports pagination via `page` query (10/page). |
 | GET | `/poetry` | ALL | Poetry collection | Mirrors the curated poetry list from Gist. |
 | GET | `/baybayin` | ALL | Baybayin transliterator | Requires `text` query; returns Unicode script. |
-| GET | `/images` | ALL | Telegram CDN proxy | Requires `file` (Telegram `file_id`). |
-| GET | `/manga` | ALL | Manga helper utility | Use `s` for search, `r` for series, `c` for chapter. |
-| GET | `/set-cookie` | ALL | Issues temporary cookie | Seeds `temporary` cookie for POST access. |
-| POST | `/feedback/submit` | COOKIE | Stores feedback via Gist | Needs `temporary` cookie + JSON body. |
-| POST | `/poetry/submit` | ADMIN | Publishes new poem entries | Requires `X-API-Key` header (matches `POST_API`). |
-| POST | `/ai/chat` | ALL | Pollinations chat relay | Accepts ChatGPT-style message arrays. |
-| POST | `/upload/submit` | ADMIN | Telegram upload bridge | `multipart/form-data` with `image` field. |
+| GET | `/images` | ALL | Telegram CDN proxy | Requires `file` (Telegram `file_id`). Note: route is defined as `images` (no leading slash) but is typically mounted as `/images`. |
+| GET | `/manga` | ALL | Manga helper utility | Use `s` for search, `r` for series (slug or URL), `c` for chapter. Note: route is defined as `manga` (no leading slash) but is typically mounted as `/manga`. |
+| GET | `/set-cookie` | ALL | Issues temporary cookie | Sets `temporary` cookie (30m) for cookie-protected POST access; `Secure` + `SameSite=None`. |
+| GET | `/yt` | ALL | YouTube MP3 downloader helper | Requires `videoID` query (URL or ID). Uses RapidAPI (`RAPIDKEY`, `RAPIDHOST`). |
+| POST | `/feedback` | COOKIE | Stores feedback via Gist | Requires `temporary` cookie + JSON body. |
+| POST | `/poetry` | ADMIN | Publishes new poem entries | Requires `X-API-Key` header (matches `POST_API`). |
+| POST | `/ai/chat` | ALL | Pollinations chat relay | Accepts ChatGPT-style `messages` array and returns cleaned content (ads stripped). |
+| POST | `/upload` | ADMIN | Telegram upload bridge | `multipart/form-data` with `image` field; relays to `sendPhoto`. |
 
 ### Endpoint Details
 
@@ -136,11 +143,12 @@ curl "http://localhost:8000/feedback?page=2"
 ```
 
 #### GET /blog
-- **Payload**: Always returns the whole list stored inside `blog.json` (no pagination yet).
+- **Pagination**: `page` query (≥ 1, default `1`). Response includes `pages`, `current`, `count`, and `data`.
+- **Cache**: Responses cached for 5 minutes and refreshed in the background when cache is valid.
 - **Ordering**: Newest entries appear first by reversing the list in-memory.
 
 ```bash
-curl "http://localhost:8000/blog"
+curl "http://localhost:8000/blog?page=1"
 ```
 
 #### GET /baybayin
@@ -158,7 +166,7 @@ curl "http://localhost:8000/baybayin?text=kumusta%20ka"
 3. **Chapter Pages** – `?r=<series-slug>&c=<chapter-id>` to receive page image URLs.
 
 #### GET /images
-- **Input**: `file` query takes a Telegram `file_id` returned by `/upload/submit`.
+- **Input**: `file` query takes a Telegram `file_id` returned by `POST /upload`. 
 - **Behaviour**: The backend downloads the file via Telegram Bot API and streams it to the caller, masking bot credentials.
 
 ```bash
@@ -179,12 +187,12 @@ curl -X POST http://localhost:8000/ai/chat \\
   }'
 ```
 
-#### POST /upload/submit
+#### POST /upload
 - **Security**: Requires both `X-API-Key` header (`POST_API`) and valid Telegram env vars.
 - **Response**: Forwards Telegram's JSON payload, including the generated `file_id` for re-use with `/images`.
 
 ```bash
-curl -X POST http://localhost:8000/upload/submit \\
+curl -X POST http://localhost:8000/upload \\
   -H "X-API-Key: $POST_API" \\
   -F "image=@/path/to/photo.jpg"
 ```
@@ -446,9 +454,9 @@ curl -X POST http://localhost:8000/ai/chat \
   -d '{"messages":[{"role":"user","content":"Hello!"}]}'
 
 # Test feedback submission (requires cookie)
-curl -X POST http://localhost:8000/feedback/submit \
+curl -X POST http://localhost:8000/feedback \
   -H "Content-Type: application/json" \
-  -H "Cookie: your-auth-cookie" \
+  -H "Cookie: temporary=your-temporary-cookie" \
   -d '{"name":"Test","email":"test@example.com","message":"Test message"}'
 ```
 
@@ -594,7 +602,7 @@ Updates gathered from commits `231d625`, `886400b`, and `79880e1`.
 
 #### Added
 - **Manga utility endpoint** (`GET /manga`) that supports search, chapter listing, and inline chapter reading workflows.
-- **Telegram storage bridge** with `POST /upload/submit` for administrators and `GET /images` for public consumption, enabling offloaded asset hosting.
+- **Telegram storage bridge** with `POST /upload` for administrators and `GET /images` for public consumption, enabling offloaded asset hosting.
 - **Expanded README endpoint matrix** covering required query/body parameters and usage examples for new routes.
 
 #### Changed
