@@ -21,7 +21,7 @@ type Response struct {
 	Link string `json:"link"`
 }
 
-var Youtube = utils.Route{
+var YoutubeDL = utils.Route{
 	Path:    "yt",
 	Method:  utils.METHOD_GET,
 	Handler: youtube,
