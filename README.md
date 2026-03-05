@@ -572,6 +572,19 @@ export APP_ENV=development
 
 ## 📝 Changelog
 
+### Version 1.4.0 - March 5, 2026
+
+Feature + reliability release.
+
+#### Added
+- **YouTube MP3 helper endpoint** (`GET /yt`) backed by RapidAPI, returning both `url` and extracted `title`.
+- **RapidAPI configuration variables** (`RAPIDKEY`, `RAPIDHOST`) documented in the setup and environment variable matrix.
+
+#### Changed
+- `POST /ai/chat` now strips Pollinations “Support/Ad” footer content from responses and includes safer parsing/validation of the upstream payload.
+- `POST /blog` now auto-assigns a monotonically increasing `id` when appending new blog posts.
+- Air dev config updated to stop on build errors and clear the screen on rebuild for a cleaner dev loop.
+
 ### Version 1.3.2 - February 14, 2026
 
 Documentation-focused release.
