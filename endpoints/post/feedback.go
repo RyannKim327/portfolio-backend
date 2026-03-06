@@ -1,6 +1,8 @@
 package post
 
 import (
+	"time"
+
 	"portfolio-backend/utils"
 
 	"github.com/gin-gonic/gin"
@@ -24,7 +26,15 @@ func feedback(ctx *gin.Context) {
 	}
 
 	gist := utils.GistHandlerList("feedback.json")
-	gist = append(gist, body)
+
+	newBody := gin.H{
+		"application": body["title"].(string),
+		"message":     body["content"].(string),
+		"userId":      body["tags"],
+		"date":        time.Now(),
+	}
+
+	gist = append(gist, newBody)
 	response := utils.GistPostHandler("feedback.json", gist)
 
 	ctx.JSON(200, gin.H{
