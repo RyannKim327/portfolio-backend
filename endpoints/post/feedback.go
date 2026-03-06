@@ -28,9 +28,9 @@ func feedback(ctx *gin.Context) {
 	gist := utils.GistHandlerList("feedback.json")
 
 	newBody := gin.H{
-		"application": body["title"].(string),
-		"message":     body["content"].(string),
-		"userId":      body["tags"],
+		"application": body["application"].(string),
+		"message":     body["message"].(string),
+		"userId":      body["userId"],
 		"date":        time.Now(),
 	}
 
