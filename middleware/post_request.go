@@ -12,7 +12,7 @@ func RequestHandlerAdmin() gin.HandlerFunc {
 		expectedKey := os.Getenv("POST_API")
 
 		if key == "" || key != expectedKey {
-			ctx.AbortWithStatusJSON(403, gin.H{
+			ctx.JSON(403, gin.H{
 				"error": "Unauthorized",
 			})
 			return

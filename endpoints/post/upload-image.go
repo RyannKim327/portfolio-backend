@@ -18,7 +18,7 @@ import (
 var _ = godotenv.Load()
 
 var UploadImage = utils.Route{
-	Path:       "/upload",
+	Path:       "/upload-image",
 	Method:     utils.METHOD_POST,
 	Permission: utils.PERMISSION_ADMIN,
 	Handler:    uploadImage,
