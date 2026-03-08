@@ -19,8 +19,8 @@ var app = gin.Default()
 func CorsSetup() {
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"https://ryannkim327.is-a.dev", "https://amogus-bot.onrender.com", "http://localhost:5173"},
-		AllowMethods:     []string{"GET", "POST", "PATCH", "PUT", "DELETE"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowMethods:     []string{"GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "X-API-Key"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
