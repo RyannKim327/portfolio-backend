@@ -89,7 +89,7 @@ func blog_handler(ctx *gin.Context) {
 			if id, err := strconv.Atoi(ctx.Query("id")); err == nil {
 				if id > 0 {
 					ctx.JSON(200, gin.H{
-						"data": response[len(response)-id],
+						"data": cached[len(cached)-id],
 					})
 					return
 				}
@@ -149,7 +149,7 @@ func blog_handler(ctx *gin.Context) {
 		if id, err := strconv.Atoi(ctx.Query("id")); err == nil {
 			if id > 0 {
 				ctx.JSON(200, gin.H{
-					"data": response[len(response)-id],
+					"data": cached[len(cached)-id],
 				})
 				return
 			}
