@@ -572,6 +572,19 @@ export APP_ENV=development
 
 ## 📝 Changelog
 
+### Version 1.4.1 - March 14, 2026
+
+Updates gathered from commits `eb34d36`, `602f7e3`, and `23f82bf`.
+
+#### Added
+- **Blog view** improvements (`GET /blog`) and related output updates.
+
+#### Changed
+- Adjusted list sizing/tuning from **10 → 15** for paginated responses (see commit `23f82bf`).
+
+#### Fixed
+- Fixed a state/interaction issue between **clicked items and pagination** (see commit `eb34d36`).
+
 ### Version 1.4.0 - March 5, 2026
 
 Feature + reliability release.
