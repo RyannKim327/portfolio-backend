@@ -27,7 +27,8 @@ var Routes = []utils.Route{
 	post.AIAgent,
 
 	// TODO: POST Requests
-	// post.Blog,
+	post.Blog,
+	post.Experience,
 	post.Feedback,
 	post.Poetry,
 	post.UploadImage,

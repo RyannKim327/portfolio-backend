@@ -1,24 +1,18 @@
 package post
 
 import (
+	"time"
+
 	"portfolio-backend/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
 var Blog = utils.Route{
-	Path:       "/feedback",
+	Path:       "/blog",
 	Method:     utils.METHOD_POST,
 	Permission: utils.PERMISSION_ADMIN,
 	Handler:    blog,
-}
-
-type BLOG_GIST struct {
-	Id      int      `json:"id"`
-	Title   string   `json:"title"`
-	Content string   `json:"content"`
-	Tags    []string `json:"tags"`
-	Time    string   `json:"time"`
 }
 
 func blog(ctx *gin.Context) {
@@ -41,11 +35,14 @@ func blog(ctx *gin.Context) {
 		}
 	}
 
+	now := time.Now().Format("01-02-2006")
+
 	newBody := gin.H{
 		"id":      maxID + 1,
 		"title":   body["title"].(string),
 		"content": body["content"].(string),
 		"tags":    body["tags"],
+		"time":    now,
 	}
 
 	gist = append(gist, newBody)
