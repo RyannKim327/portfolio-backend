@@ -26,7 +26,7 @@ var Blog = utils.Route{
 
 func blog_handler(ctx *gin.Context) {
 	page := 1
-	limit := 15
+	limit := 9
 
 	if ctx.Query("page") != "" {
 		if p, err := strconv.Atoi(ctx.Query("page")); err == nil && p > 0 {
@@ -85,6 +85,17 @@ func blog_handler(ctx *gin.Context) {
 			response = append(response, cached[i])
 		}
 
+		if ctx.Query("id") != "" {
+			if id, err := strconv.Atoi(ctx.Query("id")); err == nil {
+				if id > 0 {
+					ctx.JSON(200, gin.H{
+						"data": response[len(response)-id],
+					})
+					return
+				}
+			}
+		}
+
 		ctx.JSON(200, gin.H{
 			"pages":   pages,
 			"current": page,
@@ -133,6 +144,16 @@ func blog_handler(ctx *gin.Context) {
 		}
 	} else {
 		response = data
+	}
+	if ctx.Query("id") != "" {
+		if id, err := strconv.Atoi(ctx.Query("id")); err == nil {
+			if id > 0 {
+				ctx.JSON(200, gin.H{
+					"data": response[len(response)-id],
+				})
+				return
+			}
+		}
 	}
 
 	ctx.JSON(200, gin.H{
