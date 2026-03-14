@@ -2,6 +2,14 @@
 
 A comprehensive Go-based REST API backend designed to serve portfolio data through GitHub Gist integration. This backend provides endpoints for managing projects, experiences, feedback, and includes unique features like Baybayin transliteration and AI chat integration.
 
+<div align="center">
+
+![Go](https://img.shields.io/badge/Go-1.25.3-00ADD8?logo=go&logoColor=white)
+![Gin](https://img.shields.io/badge/Gin-v1.11.0-00ADD8?logo=go&logoColor=white)
+![WakaTime](https://wakatime.com/badge/user/your-wakatime-user-id/project/your-project-id.svg)
+
+</div>
+
 ## 🚀 Features
 
 - **RESTful API** with clean endpoint structure
@@ -23,7 +31,7 @@ A comprehensive Go-based REST API backend designed to serve portfolio data throu
 - [Configuration](#configuration)
 - [API Endpoints](#-api-endpoints)
 - [Documentation](#-documentation)
-- [Architecture](#-architecture)
+- [System Architecture](#-system-architecture)
 - [Development](#development)
 - [Testing](#testing)
 - [Deployment](#deployment)
@@ -36,7 +44,7 @@ A comprehensive Go-based REST API backend designed to serve portfolio data throu
 
 ### Prerequisites
 
-- Go 1.25.0 or higher
+- Go 1.25.3 or higher
 - Git
 - GitHub Personal Access Token (for Gist integration)
 - [Air](https://github.com/cosmtrek/air) for hot reload development (optional but recommended)
@@ -118,6 +126,7 @@ PORT=8000
 | GET | `/` | ALL | Health/status probe | Returns application metadata and uptime markers. |
 | GET | `/projects` | ALL | Portfolio project listing | Reads from GitHub Gist; cached for 60s. |
 | GET | `/experiences` | ALL | Work experience timeline | Sorted chronologically before response. |
+| GET | `/certs` | ALL | Certificates listing | Reads `certificates.json` from GitHub Gist; reversed newest-first. |
 | GET | `/blog` | ALL | Blog feed | Streams entire `blog.json`, newest-first. |
 | GET | `/feedback` | ALL | Public feedback viewer | Supports pagination via `page` query (10/page). |
 | GET | `/poetry` | ALL | Poetry collection | Mirrors the curated poetry list from Gist. |
@@ -129,6 +138,7 @@ PORT=8000
 | POST | `/feedback` | COOKIE | Stores feedback via Gist | Requires `temporary` cookie + JSON body. |
 | POST | `/poetry` | ADMIN | Publishes new poem entries | Requires `X-API-Key` header (matches `POST_API`). |
 | POST | `/ai/chat` | ALL | Pollinations chat relay | Accepts ChatGPT-style `messages` array and returns cleaned content (ads stripped). |
+| POST | `/certs` | ADMIN | Append a certificate entry | Requires `X-API-Key` header (matches `POST_API`); appends to `certificates.json` in Gist. |
 | POST | `/upload` | ADMIN | Telegram upload bridge | `multipart/form-data` with `image` field; relays to `sendPhoto`. |
 
 ### Endpoint Details
@@ -213,10 +223,10 @@ The README doubles as the living reference, but the project ships with several c
 
 ### Keeping Docs Updated
 - Update tables under [API Endpoints](#-api-endpoints) whenever a handler is added/changed.
-- Keep diagrams (Mermaid) in the [Architecture](#-architecture) section synchronized with actual dependencies (Gist, Telegram, Pollinations, cache).
+- Keep diagrams (Mermaid) in the [System Architecture](#-system-architecture) section synchronized with actual dependencies (Gist, Telegram, Pollinations, cache).
 - Mention schema or payload tweaks in the [Changelog](#changelog) so clients know when to adapt.
 
-## 🏗 Architecture
+## 🏗 System Architecture
 
 ### System Overview
 - **Gin Router**: Terminates HTTP traffic, applies CORS/default headers, and dispatches into the routing matrix declared in `endpoints/`.
@@ -263,7 +273,7 @@ flowchart TD
 | External Services | GitHub Gist for storage, Pollinations AI for chat, Telegram Bot API for uploads/images | Isolated via `utils` helpers for easier swapping |
 | Utilities (`utils/`) | Shared structs, Gist helpers, Baybayin transliterator, static constants | Keeps handlers DRY and enforces consistent responses |
 
-### Project Structure
+### Project Structure (High-level)
 
 ```mermaid
 flowchart LR
@@ -272,32 +282,29 @@ flowchart LR
     A --> C[middleware/]
     A --> D[utils/]
     A --> E[index.go]
-    A --> F[.air.toml]
-    A --> G[tmp/]
-    
+    A --> F[go.mod]
+    A --> G[.air.toml]
+    A --> H[tmp/]
+
     B --> B1[get/]
     B --> B2[post/]
     B --> B3[index.go]
-    B1 --> B1a[projects.go]
-    B1 --> B1b[experiences.go]
-    B1 --> B1c[baybayin.go]
-    B1 --> B1d[feedback.go]
-    B1 --> B1e[poetry.go]
-    B2 --> B2a[post_feedback.go]
-    B2 --> B2b[post_poetry.go]
-    B2 --> B2c[ai_agent.go]
-    
-    C --> C1[server_handler.go]
-    C --> C2[headers.go]
-    C --> C3[cookie_handler.go]
-    C --> C4[post_request.go]
-    
-    D --> D1[structures.go]
-    D --> D2[gist_handler.go]
-    D --> D3[gist.go]
-    D --> D4[statics.go]
-    D --> D5[tools.go]
+
+    C --> C1[headers.go]
+    C --> C2[cookie_handler.go]
+    C --> C3[post_request.go]
+    C --> C4[server_handler.go]
+
+    D --> D1[gist_*.go]
+    D --> D2[structures.go]
+    D --> D3[statics.go]
+    D --> D4[tools.go]
 ```
+
+> Notes:
+> - `endpoints/` contains route definitions grouped by HTTP method (`get/`, `post/`).
+> - `utils/` contains Gist clients, shared structs, constants, and local processors.
+> - `middleware/` enforces headers, auth tiers, and request handling concerns.
 
 ### Request Flow
 
@@ -572,11 +579,16 @@ export APP_ENV=development
 
 ## 📝 Changelog
 
+> Current release: **v1.4.1**
+
 ### Version 1.4.1 - March 14, 2026
 
-Updates gathered from commits `eb34d36`, `602f7e3`, and `23f82bf`.
+Updates gathered from commits `1779383`, `eb34d36`, `602f7e3`, and `23f82bf`.
 
 #### Added
+- **Certificates endpoints** for listing and publishing portfolio certifications:
+  - `GET /certs` (public) reading `certificates.json` from Gist.
+  - `POST /certs` (admin) appending new certificate entries to Gist.
 - **Blog view** improvements (`GET /blog`) and related output updates.
 
 #### Changed
