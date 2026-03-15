@@ -109,7 +109,7 @@ func aiagent(ctx *gin.Context) {
 
 	content := message["content"]
 
-	pattern := `---\n\n\*Support Pollinations\.AI:\*\n\n---\n\n🌸 \*Ad\* 🌸\nPowered by Pollinations\.AI free text APIs\. \[Support our mission\]\(https:\/\/pollinations\.ai\/redirect\/kofi\) to keep AI accessible for everyone\.`
+	pattern := `---\n\*Support Pollinations\.AI:\*\n---\n🌸 \*Ad\* 🌸\nPowered by Pollinations\.AI free text APIs\. \[Support our mission\]\(https:\/\/pollinations\.ai\/redirect\/kofi\) to keep AI accessible for everyone\.`
 
 	re := regexp.MustCompile(pattern)
 
