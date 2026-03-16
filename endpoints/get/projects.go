@@ -11,6 +11,8 @@ var Projects = utils.Route{
 	Method: utils.METHOD_GET,
 	Handler: func(ctx *gin.Context) {
 		data := utils.GistHandler("projects.json")
-		ctx.JSON(200, data)
+		ctx.JSON(200, gin.H{
+			"data": data,
+		})
 	},
 }

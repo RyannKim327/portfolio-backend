@@ -11,6 +11,9 @@ var Experiences = utils.Route{
 	Method: utils.METHOD_GET,
 	Handler: func(ctx *gin.Context) {
 		data := utils.GistHandlerList("experiences.json")
-		ctx.JSON(200, data)
+		ctx.JSON(200, gin.H{
+			"count": len(data),
+			"data":  data,
+		})
 	},
 }
