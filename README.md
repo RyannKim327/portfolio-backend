@@ -579,7 +579,27 @@ export APP_ENV=development
 
 ## 📝 Changelog
 
-> Current release: **v1.4.1**
+> Current release: **v1.5.0**
+
+### Version 1.5.0 - March 18, 2026
+
+Multimedia Update and Security
+
+#### Change
+- Endpoint `/upload-image` to `/upload`
+- Endpoint `/images` to `/retrieve`
+- Change `JSON` to `Abort` response in posting with admin
+
+#### Added
+- Can now upload any type of data
+	- Automatically identify the file type based on its `mimetype`
+
+### Version 1.4.2 - March 16, 2026
+
+Parameter Update
+
+#### Change
+-	Added `data` on **experience** and **projects** for singularity responses
 
 ### Version 1.4.1 - March 14, 2026
 
