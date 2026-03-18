@@ -17,9 +17,10 @@ func RequestHandlerCookie() gin.HandlerFunc {
 			ctx.AbortWithStatusJSON(403, gin.H{
 				"error": "Unauthorized",
 			})
+			ctx.Abort()
 			return
+		} else {
+			ctx.Next()
 		}
-
-		ctx.Next()
 	}
 }

@@ -18,10 +18,10 @@ var Routes = []utils.Route{
 	get.Certificates,
 	get.Experiences,
 	get.Feedback,
-	get.Image,
 	get.Manga,
 	get.Poetry,
 	get.Projects,
+	get.Retrieve,
 	get.YoutubeDL,
 
 	// TODO: Created AI Endpoint
@@ -33,7 +33,7 @@ var Routes = []utils.Route{
 	post.Experience,
 	post.Feedback,
 	post.Poetry,
-	post.UploadImage,
+	post.Upload,
 
 	// TODO: Cookie Handler
 	get.Cookie,

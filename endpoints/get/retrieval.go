@@ -23,10 +23,10 @@ type result struct {
 	} `json:"result"`
 }
 
-var Image = utils.Route{
-	Path:    "images",
+var Retrieve = utils.Route{
+	Path:    "retrieve",
 	Method:  utils.METHOD_GET,
-	Handler: fetchImage,
+	Handler: fetchFile,
 }
 
 func fileDownload(file string) string {
@@ -37,7 +37,7 @@ func fileDownload(file string) string {
 	return file_url
 }
 
-func fetchImage(ctx *gin.Context) {
+func fetchFile(ctx *gin.Context) {
 	// TODO: Setup for credentials and URL
 	api_key := os.Getenv("TG_API")
 	file_id := ctx.Query("file")
@@ -80,9 +80,9 @@ func fetchImage(ctx *gin.Context) {
 		return
 	}
 
-	image := fileDownload(data.Result.FilePath)
+	f_url := fileDownload(data.Result.FilePath)
 
-	fileResp, err := http.Get(image)
+	fileResp, err := http.Get(f_url)
 	if err != nil {
 		ctx.JSON(500, gin.H{
 			"error": err.Error(),
@@ -91,15 +91,18 @@ func fetchImage(ctx *gin.Context) {
 	}
 
 	defer fileResp.Body.Close()
+
 	fileBytes, err := io.ReadAll(fileResp.Body)
 	if err != nil {
 		ctx.JSON(500, gin.H{
 			"error": err.Error(),
 		})
 		return
-
 	}
-	ctx.Data(200, "image/jpeg", fileBytes)
+
+	mimeType := http.DetectContentType(fileBytes)
+
+	ctx.Data(200, mimeType, fileBytes)
 
 	ctx.JSON(200, gin.H{
 		"response": "",
