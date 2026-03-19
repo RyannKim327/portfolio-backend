@@ -3,6 +3,7 @@ package endpoints
 import (
 	get "portfolio-backend/endpoints/get"
 	post "portfolio-backend/endpoints/post"
+	put "portfolio-backend/endpoints/put"
 	utils "portfolio-backend/utils"
 )
 
@@ -30,10 +31,12 @@ var Routes = []utils.Route{
 	// TODO: POST Requests
 	post.Blog,
 	post.Certificates,
-	post.Experience,
 	post.Feedback,
 	post.Poetry,
 	post.Upload,
+
+	// TODO: PUT Requests
+	put.Experience,
 
 	// TODO: Cookie Handler
 	get.Cookie,

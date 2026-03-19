@@ -1,4 +1,4 @@
-package post
+package put
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 
 var Experience = utils.Route{
 	Path:       "/experiences",
-	Method:     utils.METHOD_POST,
+	Method:     utils.METHOD_PUT,
 	Permission: utils.PERMISSION_ADMIN,
 	Handler:    exp,
 }
