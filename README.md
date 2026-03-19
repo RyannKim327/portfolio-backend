@@ -579,7 +579,14 @@ export APP_ENV=development
 
 ## 📝 Changelog
 
-> Current release: **v1.5.0**
+> Current release: **v1.5.1**
+
+### Version 1.5.1 - March 19, 2026
+
+Caching
+
+#### Added
+- Caching for easy load
 
 ### Version 1.5.0 - March 18, 2026
 

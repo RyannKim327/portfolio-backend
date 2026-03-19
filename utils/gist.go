@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"sync"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -13,6 +15,44 @@ import (
 var _ = godotenv.Load()
 
 var URL = fmt.Sprintf("https://api.github.com/gists/%s", os.Getenv("GIST_ID"))
+
+// TODO: Caching (Code ni chatGPT)
+type cacheItem struct {
+	Data      Gist
+	ExpiresAt time.Time
+}
+
+var cache = struct {
+	mu    sync.RWMutex
+	items map[string]cacheItem
+}{
+	items: make(map[string]cacheItem),
+}
+
+// TTL (adjust as needed)
+const cacheTTL = 5 * time.Minute
+
+// INFO: CACHE HELPERS
+func getCache(key string) (Gist, bool) {
+	cache.mu.RLock()
+	item, exists := cache.items[key]
+	cache.mu.RUnlock()
+
+	if !exists || time.Now().After(item.ExpiresAt) {
+		return Gist{}, false
+	}
+
+	return item.Data, true
+}
+
+func setCache(key string, data Gist) {
+	cache.mu.Lock()
+	cache.items[key] = cacheItem{
+		Data:      data,
+		ExpiresAt: time.Now().Add(cacheTTL),
+	}
+	cache.mu.Unlock()
+}
 
 func access(params AccessAPI) GistResponseHandler {
 	/*
@@ -24,6 +64,14 @@ func access(params AccessAPI) GistResponseHandler {
 	// TODO: To automatically use GET request if params.Method not exists
 	if params.Method == "" {
 		params.Method = "GET"
+	}
+
+	// TODO: Only cache GET requests
+	cacheKey := params.URL
+	if params.Method == "GET" {
+		if cached, ok := getCache(cacheKey); ok {
+			return GistResponseHandler{Response: cached}
+		}
 	}
 
 	// TODO: To initiate request
@@ -60,6 +108,11 @@ func access(params AccessAPI) GistResponseHandler {
 		return GistResponseHandler{Error: err}
 	}
 
+	// TODO: Store in cache after successful GET
+	if params.Method == "GET" {
+		setCache(cacheKey, data)
+	}
+
 	return GistResponseHandler{Response: data}
 }
 
@@ -73,16 +126,17 @@ func Get() GistResponseHandler {
 func Post(data interface{}) GistResponseHandler {
 	jsonBody, err := json.Marshal(data)
 	if err != nil {
-		return GistResponseHandler{
-			Error: err,
-		}
+		return GistResponseHandler{Error: err}
 	}
 
-	resp := access(AccessAPI{
+	// ❗ Optional: invalidate cache on write
+	cache.mu.Lock()
+	delete(cache.items, URL)
+	cache.mu.Unlock()
+
+	return access(AccessAPI{
 		Method: "POST",
 		URL:    URL,
 		Body:   bytes.NewBuffer(jsonBody),
 	})
-
-	return resp
 }
