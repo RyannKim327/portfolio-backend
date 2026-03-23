@@ -17,6 +17,7 @@ var Feedback = utils.Route{
 
 func feedback(ctx *gin.Context) {
 	var body gin.H
+	file := "feedback.json"
 
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.JSON(400, gin.H{
@@ -25,7 +26,7 @@ func feedback(ctx *gin.Context) {
 		return
 	}
 
-	gist := utils.GistHandlerList("feedback.json")
+	gist := utils.GistHandlerList(file)
 
 	newBody := gin.H{
 		"application": body["application"].(string),
@@ -35,7 +36,7 @@ func feedback(ctx *gin.Context) {
 	}
 
 	gist = append(gist, newBody)
-	response := utils.GistPostHandler("feedback.json", gist)
+	response := utils.GistPostHandler(file, gist)
 
 	ctx.JSON(200, gin.H{
 		"from": response,

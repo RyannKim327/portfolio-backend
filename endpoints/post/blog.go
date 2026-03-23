@@ -17,6 +17,7 @@ var Blog = utils.Route{
 
 func blog(ctx *gin.Context) {
 	var body gin.H
+	file := "blog.json"
 
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.JSON(400, gin.H{
@@ -25,7 +26,7 @@ func blog(ctx *gin.Context) {
 		return
 	}
 
-	gist := utils.GistHandlerList("blog.json")
+	gist := utils.GistHandlerList(file)
 
 	maxID := 0
 	for _, g := range gist {
@@ -46,7 +47,7 @@ func blog(ctx *gin.Context) {
 	}
 
 	gist = append(gist, newBody)
-	response := utils.GistPostHandler("blog.json", gist)
+	response := utils.GistPostHandler(file, gist)
 
 	ctx.JSON(200, gin.H{
 		"from": response,

@@ -8,6 +8,7 @@ import (
 
 func poetry(ctx *gin.Context) {
 	var body gin.H
+	file := "poetry.json"
 
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.JSON(400, gin.H{
@@ -16,9 +17,9 @@ func poetry(ctx *gin.Context) {
 		return
 	}
 
-	gist := utils.GistHandlerList("poetry.json")
+	gist := utils.GistHandlerList(file)
 	gist = append(gist, body)
-	response := utils.GistPostHandler("poetry.json", gist)
+	response := utils.GistPostHandler(file, gist)
 
 	ctx.JSON(200, gin.H{
 		"from": response,

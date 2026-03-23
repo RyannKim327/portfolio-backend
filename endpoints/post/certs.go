@@ -15,6 +15,7 @@ var Certificates = utils.Route{
 
 func certificate(ctx *gin.Context) {
 	var body gin.H
+	file := "certificates.json"
 
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.JSON(400, gin.H{
@@ -23,9 +24,9 @@ func certificate(ctx *gin.Context) {
 		return
 	}
 
-	gist := utils.GistHandlerList("certificates.json")
+	gist := utils.GistHandlerList(file)
 	gist = append(gist, body)
-	response := utils.GistPostHandler("certificates.json", gist)
+	response := utils.GistPostHandler(file, gist)
 
 	ctx.JSON(200, gin.H{
 		"from": response,

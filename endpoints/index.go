@@ -17,6 +17,7 @@ var Routes = []utils.Route{
 	get.Baybayin,
 	get.Blog,
 	get.Certificates,
+	get.Contact,
 	get.Experiences,
 	get.Feedback,
 	get.Manga,
@@ -31,6 +32,7 @@ var Routes = []utils.Route{
 	// TODO: POST Requests
 	post.Blog,
 	post.Certificates,
+	post.Contact,
 	post.Feedback,
 	post.Poetry,
 	post.Upload,
