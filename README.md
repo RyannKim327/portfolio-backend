@@ -579,7 +579,14 @@ export APP_ENV=development
 
 ## 📝 Changelog
 
-> Current release: **v1.5.1**
+> Current release: **v1.6.0**
+
+### Version 1.6.0 - March 23, 2026
+#### Added
+- Edit blogs
+
+#### Initiated
+- Contacts to Admin based
 
 ### Version 1.5.1 - March 19, 2026
 
