@@ -38,7 +38,7 @@ func put_blog(ctx *gin.Context) {
 	}
 
 	gist := utils.GistHandlerList("blog.json")
-
+	body["id"] = num
 	gist[num-1] = body
 
 	response := utils.GistPostHandler("blog.json", gist)
