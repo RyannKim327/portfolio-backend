@@ -77,6 +77,16 @@ func Register(routes utils.Route) {
 
 		routes.Path += "submit"
 	}
+	//
+	// if (strings.ToUpper(method) == strings.ToUpper(utils.METHOD_PUT) || strings.ToUpper(method) == strings.ToUpper(utils.METHOD_PATCH)) && strings.ToUpper(routes.Permission) != utils.PERMISSION_ALL && !strings.HasSuffix(routes.Path, "/edit") {
+	//
+	// 	// TODO: To prevent double slash in endpoints
+	// 	if !strings.HasSuffix(routes.Path, "/") {
+	// 		routes.Path += "/"
+	// 	}
+	//
+	// 	routes.Path += "edit"
+	// }
 
 	// TODO: To setup default permission
 	if routes.Permission == "" {

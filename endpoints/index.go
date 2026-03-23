@@ -36,6 +36,7 @@ var Routes = []utils.Route{
 	post.Upload,
 
 	// TODO: PUT Requests
+	put.Blog,
 	put.Experience,
 
 	// TODO: Cookie Handler

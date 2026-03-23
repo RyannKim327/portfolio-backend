@@ -129,7 +129,6 @@ func Post(data interface{}) GistResponseHandler {
 		return GistResponseHandler{Error: err}
 	}
 
-	// ❗ Optional: invalidate cache on write
 	cache.mu.Lock()
 	delete(cache.items, URL)
 	cache.mu.Unlock()
