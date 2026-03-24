@@ -16,7 +16,13 @@ var Blog = utils.Route{
 
 func blog_handler(ctx *gin.Context) {
 	page := 1
-	limit := 9
+	limit := 8
+
+	if ctx.Query("limit") != "" {
+		if l, err := strconv.Atoi(ctx.Query("limit")); err == nil && l > 0 {
+			limit = l
+		}
+	}
 
 	if ctx.Query("page") != "" {
 		if p, err := strconv.Atoi(ctx.Query("page")); err == nil && p > 0 {
