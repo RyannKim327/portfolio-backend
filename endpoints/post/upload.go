@@ -31,7 +31,7 @@ func uploadFile(ctx *gin.Context) {
 	chat_id := os.Getenv("TG_CHATID")
 
 	// TODO: To fetch file from uploads
-	file, err := ctx.FormFile("media")
+	file, err := ctx.FormFile("file")
 	if err != nil {
 		ctx.JSON(500, gin.H{
 			"error": err.Error(),
