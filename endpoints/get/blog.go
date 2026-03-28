@@ -29,6 +29,7 @@ func blog_handler(ctx *gin.Context) {
 			page = p
 		}
 	}
+
 	data := utils.GistHandlerList("blog.json")
 	utils.Reverse(data)
 
@@ -64,6 +65,7 @@ func blog_handler(ctx *gin.Context) {
 	} else {
 		response = data
 	}
+
 	if ctx.Query("id") != "" {
 		if id, err := strconv.Atoi(ctx.Query("id")); err == nil {
 			if id > 0 {

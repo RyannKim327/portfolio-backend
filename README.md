@@ -6,6 +6,7 @@ A comprehensive Go-based REST API backend designed to serve portfolio data throu
 
 ![Go](https://img.shields.io/badge/Go-1.25.3-00ADD8?logo=go&logoColor=white)
 ![Gin](https://img.shields.io/badge/Gin-v1.11.0-00ADD8?logo=go&logoColor=white)
+![Version](https://img.shields.io/badge/version-v1.4.0-blue)
 ![WakaTime](https://wakatime.com/badge/user/your-wakatime-user-id/project/your-project-id.svg)
 
 </div>
@@ -779,6 +780,24 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 - Email: weryses19@gmail.com
 - GitHub: [@RyannKim327](https://github.com/RyannKim327)
 - Portfolio: [ryannkim327.is-a.dev](https://ryannkim327.is-a.dev)
+
+## 🕒 Changelog
+
+### v1.4.0 (2026-03-28)
+- Added manual request limits and reduced overall limits.
+- Optimized API performance for high-traffic scenarios.
+
+### v1.3.0 (2026-03-24)
+- **Breaking Change**: Migrated contact system from email-based to admin cloud-base.
+- Enhanced reliability of contact message delivery.
+
+### v1.2.0 (2026-03-23)
+- Added Blog Editing capabilities for administrators.
+- Fixed critical data type errors in experience and feedback models.
+
+### v1.1.0 (2026-03-19)
+- Implemented global caching system to reduce GitHub Gist API dependency.
+- Updated experience endpoints (Changed from POST to PUT for updates).
 
 ## 🙏 Acknowledgments
 
