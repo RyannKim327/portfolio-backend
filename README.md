@@ -6,8 +6,8 @@ A comprehensive Go-based REST API backend designed to serve portfolio data throu
 
 ![Go](https://img.shields.io/badge/Go-1.25.3-00ADD8?logo=go&logoColor=white)
 ![Gin](https://img.shields.io/badge/Gin-v1.11.0-00ADD8?logo=go&logoColor=white)
-![Version](https://img.shields.io/badge/version-v1.4.0-blue)
-![WakaTime](https://wakatime.com/badge/user/your-wakatime-user-id/project/your-project-id.svg)
+![Version](https://img.shields.io/badge/version-v1.6.0-blue)
+[![wakatime](https://wakatime.com/badge/user/4d42a5c3-9ffc-44f5-a481-76e38ea4c4e2/project/9d6ad33d-7c40-4bb3-8b4a-29f8d61a6a76.svg)](https://wakatime.com/badge/user/4d42a5c3-9ffc-44f5-a481-76e38ea4c4e2/project/9d6ad33d-7c40-4bb3-8b4a-29f8d61a6a76)
 
 </div>
 
@@ -240,7 +240,7 @@ The README doubles as the living reference, but the project ships with several c
 
 ```mermaid
 flowchart TD
-    A[Client Apps<br/>(Web, Mobile, CLI)] --> B[Gin Router]
+    A [Client Apps (Web, Mobile, CLI)] --> B[Gin Router]
     B --> C{Permission Tier}
     C -->|ALL| D[Handlers]
     C -->|COOKIE| E[Cookie Middleware]
@@ -807,7 +807,7 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 - [GitHub Gist API](https://docs.github.com/en/rest/gists) for data storage solution
 - [GoDotEnv](https://github.com/joho/godotenv) for environment variable management
 - [Gin CORS](https://github.com/gin-contrib/cors) for Cross-Origin Resource Sharing support
-- **[Qodo Command](https://github.com/qodo-ai)** for documentation assistance and automated code review feedback
+- **[Qodo Command](https://github.com/qodo-ai)** and **Google Gemini** for documentation assistance and automated code review feedback
 
 ---
 
