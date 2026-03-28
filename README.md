@@ -262,9 +262,8 @@ The README doubles as the living reference, but the project ships with several c
 ### System Architecture
 
 ```mermaid
-
-graph TD
-    A[Client Apps (Web, Mobile, CLI)] --> B[Gin Router]
+flowchart TD
+    A[Client Apps:<br /> Web, Mobile, CLI] --> B[Gin Router]
     B --> C{Permission Tier}
     C -->|ALL| D[Handlers]
     C -->|COOKIE| E[Cookie Middleware]
@@ -277,13 +276,9 @@ graph TD
     H -->|Portfolio & Content| I[GitHub Gist API]
     H -->|AI Chat| J[Pollinations AI]
     H -->|Media Bridge| K[Telegram Bot API]
-    H -->|Scrapers & Local Ops| L[Internal Processors<br/>(Baybayin, Manga, etc.)]
+    H -->|Scrapers & Local Ops| L[Internal Processors<br/>Baybayin, Manga, etc.]
     I --> M[Normalizer + Cache Writer]
     J --> M
-    K --> M
-    L --> M
-    M --> Q
-    Q --> N[Client Response]
 ```
 
 ### Component Responsibilities
