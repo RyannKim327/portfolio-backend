@@ -6,7 +6,7 @@ A comprehensive Go-based REST API backend designed to serve portfolio data throu
 
 ![Go](https://img.shields.io/badge/Go-1.25.3-00ADD8?logo=go&logoColor=white)
 ![Gin](https://img.shields.io/badge/Gin-v1.11.0-00ADD8?logo=go&logoColor=white)
-![Version](https://img.shields.io/badge/version-v1.6.0-blue)
+![Version](https://img.shields.io/badge/version-v1.6.1-blue)
 [![wakatime](https://wakatime.com/badge/user/4d42a5c3-9ffc-44f5-a481-76e38ea4c4e2/project/9d6ad33d-7c40-4bb3-8b4a-29f8d61a6a76.svg)](https://wakatime.com/badge/user/4d42a5c3-9ffc-44f5-a481-76e38ea4c4e2/project/9d6ad33d-7c40-4bb3-8b4a-29f8d61a6a76)
 
 </div>
@@ -611,7 +611,13 @@ export APP_ENV=development
 
 ## 📝 Changelog
 
-### Version 1.6.0 - March 28, 2026 (Current)
+### Version 1.6.1 - March 28, 2026 (Current)
+
+- **Paginator Completion**: Successfully finalized the paginator logic for improved data navigation across paginated endpoints.
+- **Request Limiting**: Implemented manual request limits and fine-tuned overall thresholds to enhance API stability and prevent abuse.
+- **System Reliability**: Further optimized the cloud-based contact system for more reliable message delivery to administrators.
+
+### Version 1.6.0 - March 28, 2026
 
 - **Manual Request Limits**: Added manual request limits and reduced overall limits for better API stability.
 - **Enhanced Reliability**: Optimized contact system for admin cloud-based message delivery.
