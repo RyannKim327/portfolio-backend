@@ -33,8 +33,20 @@ func blog_handler(ctx *gin.Context) {
 	data := utils.GistHandlerList("blog.json")
 	utils.Reverse(data)
 
+	// TODO: To identify if the ID is existed for less process consume
+	if ctx.Query("id") != "" {
+		if id, err := strconv.Atoi(ctx.Query("id")); err == nil {
+			if id > 0 {
+				ctx.JSON(200, gin.H{
+					"data": data[len(data)-id],
+				})
+				return
+			}
+		}
+	}
+
 	// TODO: This is just to add how many pages
-	pages := len(data) / limit
+	pages := (len(data) / limit) + 1
 
 	if pages < page {
 		// TODO: To prevent out bound exception error
@@ -42,8 +54,14 @@ func blog_handler(ctx *gin.Context) {
 	}
 
 	// TODO: Start of pagination
+	total := len(data)
 	start := limit * (page - 1)
 	end := start + limit
+
+	// TODO: To create a version for last page
+	if end > total {
+		end = end - (total - start - 1)
+	}
 
 	// TODO: Condition of paginator
 	if start >= len(data) && data != nil {
@@ -66,18 +84,8 @@ func blog_handler(ctx *gin.Context) {
 		response = data
 	}
 
-	if ctx.Query("id") != "" {
-		if id, err := strconv.Atoi(ctx.Query("id")); err == nil {
-			if id > 0 {
-				ctx.JSON(200, gin.H{
-					"data": data[len(data)-id],
-				})
-				return
-			}
-		}
-	}
-
 	ctx.JSON(200, gin.H{
+		"total":   total,
 		"pages":   pages,
 		"current": page,
 		"count":   len(response),
