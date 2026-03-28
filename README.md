@@ -125,22 +125,27 @@ PORT=8000
 | Method | Path | Permission | Description | Notes |
 |--------|------|------------|-------------|-------|
 | GET | `/` | ALL | Health/status probe | Returns application metadata and uptime markers. |
-| GET | `/projects` | ALL | Portfolio project listing | Reads from GitHub Gist; cached for 60s. |
+| GET | `/projects` | ALL | Portfolio project listing | Reads from GitHub Gist; cached for 5m. |
 | GET | `/experiences` | ALL | Work experience timeline | Sorted chronologically before response. |
 | GET | `/certs` | ALL | Certificates listing | Reads `certificates.json` from GitHub Gist; reversed newest-first. |
 | GET | `/blog` | ALL | Blog feed | Streams entire `blog.json`, newest-first. |
-| GET | `/feedback` | ALL | Public feedback viewer | Supports pagination via `page` query (10/page). |
+| GET | `/feedback` | ALL | Public feedback viewer | Supports pagination via `page` query. |
 | GET | `/poetry` | ALL | Poetry collection | Mirrors the curated poetry list from Gist. |
 | GET | `/baybayin` | ALL | Baybayin transliterator | Requires `text` query; returns Unicode script. |
-| GET | `/images` | ALL | Telegram CDN proxy | Requires `file` (Telegram `file_id`). Note: route is defined as `images` (no leading slash) but is typically mounted as `/images`. |
-| GET | `/manga` | ALL | Manga helper utility | Use `s` for search, `r` for series (slug or URL), `c` for chapter. Note: route is defined as `manga` (no leading slash) but is typically mounted as `/manga`. |
-| GET | `/set-cookie` | ALL | Issues temporary cookie | Sets `temporary` cookie (30m) for cookie-protected POST access; `Secure` + `SameSite=None`. |
-| GET | `/yt` | ALL | YouTube MP3 downloader helper | Requires `videoID` query (URL or ID). Uses RapidAPI (`RAPIDKEY`, `RAPIDHOST`). |
+| GET | `/retrieve` | ALL | Telegram CDN proxy | Requires `file` (Telegram `file_id`). Proxies via Telegram Bot API. |
+| GET | `/manga` | ALL | Manga helper utility | Use `s` for search, `r` for series, `c` for chapter. |
+| GET | `/set-cookie` | ALL | Issues temporary cookie | Sets `temporary` cookie (30m) for cookie-protected access. |
+| GET | `/yt` | ALL | YouTube MP3 downloader helper | Requires `videoID` query. Uses RapidAPI. |
+| GET | `/contact` | ADMIN | Contact message list | Admin-only view of received messages. |
 | POST | `/feedback` | COOKIE | Stores feedback via Gist | Requires `temporary` cookie + JSON body. |
+| POST | `/contact` | COOKIE | Submits contact message | Requires `temporary` cookie. |
 | POST | `/poetry` | ADMIN | Publishes new poem entries | Requires `X-API-Key` header (matches `POST_API`). |
-| POST | `/ai/chat` | ALL | Pollinations chat relay | Accepts ChatGPT-style `messages` array and returns cleaned content (ads stripped). |
-| POST | `/certs` | ADMIN | Append a certificate entry | Requires `X-API-Key` header (matches `POST_API`); appends to `certificates.json` in Gist. |
-| POST | `/upload` | ADMIN | Telegram upload bridge | `multipart/form-data` with `image` field; relays to `sendPhoto`. |
+| POST | `/ai/chat` | ALL | Pollinations chat relay | Accepts ChatGPT-style `messages` array. |
+| POST | `/blog` | ADMIN | Creates new blog post | Requires `X-API-Key` header. Auto-assigns ID. |
+| POST | `/certs` | ADMIN | Append a certificate entry | Requires `X-API-Key` header. |
+| POST | `/upload` | ADMIN | Telegram upload bridge | `multipart/form-data` with `image` field. |
+| PUT | `/blog` | ADMIN | Updates existing blog post | Requires `X-API-Key` header and post `id`. |
+| PUT | `/experiences` | ADMIN | Updates experience data | Requires `X-API-Key` header. Overwrites entire list. |
 
 ### Endpoint Details
 
@@ -171,17 +176,17 @@ curl "http://localhost:8000/baybayin?text=kumusta%20ka"
 ```
 
 #### GET /manga
-`GET /manga` is a multi-mode helper around a third-party manga source:
+`GET /manga` is a multi-mode scraper around a third-party manga source:
 1. **Search** – `?s=<title>` to get matching series metadata.
 2. **Chapter List** – `?r=<series-slug>` to enumerate chapters.
 3. **Chapter Pages** – `?r=<series-slug>&c=<chapter-id>` to receive page image URLs.
 
-#### GET /images
+#### GET /retrieve
 - **Input**: `file` query takes a Telegram `file_id` returned by `POST /upload`. 
 - **Behaviour**: The backend downloads the file via Telegram Bot API and streams it to the caller, masking bot credentials.
 
 ```bash
-curl "http://localhost:8000/images?file=AgACAgUAAxkBAAIBQWdow"
+curl "http://localhost:8000/retrieve?file=AgACAgUAAxkBAAIBQWdow"
 ```
 
 #### POST /ai/chat
@@ -200,13 +205,14 @@ curl -X POST http://localhost:8000/ai/chat \\
 
 #### POST /upload
 - **Security**: Requires both `X-API-Key` header (`POST_API`) and valid Telegram env vars.
-- **Response**: Forwards Telegram's JSON payload, including the generated `file_id` for re-use with `/images`.
+- **Response**: Forwards Telegram's JSON payload, including the generated `file_id` for re-use with `/retrieve`.
 
 ```bash
 curl -X POST http://localhost:8000/upload \\
   -H "X-API-Key: $POST_API" \\
   -F "image=@/path/to/photo.jpg"
 ```
+
 
 ## 📚 Documentation
 
@@ -233,8 +239,10 @@ The README doubles as the living reference, but the project ships with several c
 - **Gin Router**: Terminates HTTP traffic, applies CORS/default headers, and dispatches into the routing matrix declared in `endpoints/`.
 - **Permission Tier**: Unified middleware enforces `ALL`, `COOKIE`, or `ADMIN` access levels before any handler executes business logic.
 - **Handler Layer**: Consolidates response shaping, cache orchestration, and fan-out to third-party services such as GitHub Gist, Pollinations AI, and Telegram Bot API.
-- **Caching**: Lightweight in-memory cache reduces duplicate reads from Gist for hotspots like `/projects` and `/feedback`.
-- **Utility Processors**: Baybayin transliteration, manga helpers, and other local processors live in `utils/` to keep handlers thin.
+- **Caching Strategy**:
+    - **Global Gist Cache**: In-memory cache for all Gist `GET` requests with a 5-minute TTL, implemented in `utils/gist.go`.
+    - **Endpoint-specific Cache**: Specialized caching for `/feedback` and `/blog` to handle pagination and high-traffic needs.
+- **Utility Processors**: Baybayin transliteration, manga scraping, and Gist integration helpers live in `utils/`.
 
 ### System Architecture
 
@@ -253,7 +261,7 @@ graph TD
     H -->|Portfolio & Content| I[GitHub Gist API]
     H -->|AI Chat| J[Pollinations AI]
     H -->|Media Bridge| K[Telegram Bot API]
-    H -->|Local Ops| L[In-memory processors
+    H -->|Scrapers & Local Ops| L[Internal Processors
 (Baybayin, Manga, etc.)]
     I --> M[Normalizer + Cache Writer]
     J --> M
@@ -267,12 +275,12 @@ graph TD
 
 | Component | Responsibility | Notes |
 |-----------|----------------|-------|
-| Router (`index.go`) | Initializes Gin, mounts middleware, and registers routes | Uses `utils.Route` definitions for discoverability |
-| Middleware (`middleware/`) | Handles headers, cookies, permission gating, and request logging | Central place to add observability or rate limiting |
-| Handlers (`endpoints/`) | Business logic, payload binding, and response formatting | Should remain stateless apart from cache access |
-| Cache Layer | Stores pre-rendered JSON for hot endpoints | TTL tuned per endpoint (e.g., 5 minutes for `/feedback`) |
-| External Services | GitHub Gist for storage, Pollinations AI for chat, Telegram Bot API for uploads/images | Isolated via `utils` helpers for easier swapping |
-| Utilities (`utils/`) | Shared structs, Gist helpers, Baybayin transliterator, static constants | Keeps handlers DRY and enforces consistent responses |
+| Router (`index.go`) | Initializes Gin, mounts CORS/Headers, and registers routes from `endpoints.Routes` | Uses `mw.Register` to apply permission gating |
+| Middleware (`middleware/`) | Enforces permission tiers (`ALL`, `COOKIE`, `ADMIN`), sets headers, and logs requests | Centralizes security and observability |
+| Handlers (`endpoints/`) | Business logic, payload binding, and response formatting | Divided into `get/`, `post/`, and `put/` packages |
+| Cache Layer | In-memory storage with TTL (default 5m) for Gist reads | Reduces GitHub API rate-limit consumption |
+| External Services | GitHub Gist (Storage), Pollinations AI (Chat), Telegram (Media Storage), RapidAPI (YouTube DL) | Isolated via `utils` for modularity |
+| Utilities (`utils/`) | Shared structures, Gist API clients, and local script processors | Enforces DRY principles across handlers |
 
 ### Project Structure (High-level)
 
@@ -284,26 +292,26 @@ flowchart LR
     A --> D[utils/]
     A --> E[index.go]
     A --> F[go.mod]
-    A --> G[.air.toml]
-    A --> H[tmp/]
 
     B --> B1[get/]
     B --> B2[post/]
-    B --> B3[index.go]
+    B --> B3[put/]
+    B --> B4[index.go]
 
     C --> C1[headers.go]
     C --> C2[cookie_handler.go]
     C --> C3[post_request.go]
     C --> C4[server_handler.go]
 
-    D --> D1[gist_*.go]
-    D --> D2[structures.go]
-    D --> D3[statics.go]
-    D --> D4[tools.go]
+    D --> D1[gist.go]
+    D --> D2[gist_handler.go]
+    D --> D3[structures.go]
+    D --> D4[statics.go]
+    D --> D5[tools.go]
 ```
 
 > Notes:
-> - `endpoints/` contains route definitions grouped by HTTP method (`get/`, `post/`).
+> - `endpoints/` contains route definitions grouped by HTTP method (`get/`, `post/`, `put/`).
 > - `utils/` contains Gist clients, shared structs, constants, and local processors.
 > - `middleware/` enforces headers, auth tiers, and request handling concerns.
 
@@ -319,7 +327,7 @@ sequenceDiagram
     participant G as GitHub Gist
     participant T as Telegram API
     participant AI as Pollinations AI
-    participant L as Local Services
+    participant S as Scrapers/Utils
 
     C->>R: HTTP Request
     R->>M: Route + attach metadata
@@ -330,16 +338,17 @@ sequenceDiagram
     else Cache Miss
         H->>G: Fetch portfolio/feedback data
         H->>AI: Proxy chat payloads
-        H->>T: Relay uploads/fetch images
-        H->>L: Execute Baybayin/manga helpers
+        H->>T: Relay uploads/fetch files
+        H->>S: Execute Baybayin/manga/yt logic
         G-->>H: JSON blobs
         AI-->>H: AI responses
         T-->>H: Telegram payloads
-        L-->>H: Processed data
+        S-->>H: Processed data
         H-->>Cache: Store normalized response
     end
     H->>C: JSON Response
 ```
+
 
 ## 🔧 Development
 
@@ -379,6 +388,7 @@ portfolio-backend/
 ├── endpoints/           # API endpoint definitions
 │   ├── get/            # GET request handlers
 │   ├── post/           # POST request handlers
+│   ├── put/             # PUT request handlers
 │   └── index.go        # Route registration
 ├── middleware/         # HTTP middleware
 │   ├── server_handler.go
@@ -388,7 +398,7 @@ portfolio-backend/
 ├── utils/              # Utility functions
 │   ├── structures.go   # Data structures
 │   ├── gist_handler.go # GitHub Gist integration
-│   ├── gist.go         # Additional Gist utilities
+│   ├── gist.go         # Gist client & global cache
 │   ├── statics.go      # Constants
 │   └── tools.go        # Helper functions
 ├── tmp/                # Temporary files (Air)
@@ -580,235 +590,54 @@ export APP_ENV=development
 
 ## 📝 Changelog
 
-> Current release: **v1.6.0**
+### Version 1.6.0 - March 28, 2026 (Current)
+- **Manual Request Limits**: Added manual request limits and reduced overall limits for better API stability.
+- **Enhanced Reliability**: Optimized contact system for admin cloud-based message delivery.
+- **Blog Editing**: Fully implemented blog edit capabilities for administrators via `PUT /blog`.
 
-### Version 1.6.0 - March 23-24, 2026
-#### Added
-- Edit blogs
-- Contacts to Admin based
+### Version 1.5.2 - March 24, 2026
+- **Contact System Migration**: **Breaking Change**: Migrated contact system from email-based to admin cloud-base for improved reliability.
+- **Singularity Responses**: Added `data` field on **experience** and **projects** for singular response formats.
 
 ### Version 1.5.1 - March 19, 2026
-
-Caching
-
-#### Added
-- Caching for easy load
+- **Global Caching**: Implemented a global in-memory caching system to reduce GitHub Gist API dependency.
+- **Experience Updates**: Updated experience endpoints (Changed from POST to PUT for updates).
 
 ### Version 1.5.0 - March 18, 2026
-
-Multimedia Update and Security
-
-#### Change
-- Endpoint `/upload-image` to `/upload`
-- Endpoint `/images` to `/retrieve`
-- Change `JSON` to `Abort` response in posting with admin
-
-#### Added
-- Can now upload any type of data
-	- Automatically identify the file type based on its `mimetype`
-
-### Version 1.4.2 - March 16, 2026
-
-Parameter Update
-
-#### Change
--	Added `data` on **experience** and **projects** for singularity responses
+- **Multimedia Update & Security**:
+  - Renamed `/upload-image` to `/upload`.
+  - Renamed `/images` to `/retrieve`.
+  - Enhanced security by using `Abort` instead of simple JSON for failed admin requests.
+  - Added support for all data types via `mimetype` identification.
 
 ### Version 1.4.1 - March 14, 2026
-
-Updates gathered from commits `1779383`, `eb34d36`, `602f7e3`, and `23f82bf`.
-
-#### Added
-- **Certificates endpoints** for listing and publishing portfolio certifications:
-  - `GET /certs` (public) reading `certificates.json` from Gist.
-  - `POST /certs` (admin) appending new certificate entries to Gist.
-- **Blog view** improvements (`GET /blog`) and related output updates.
-
-#### Changed
-- Adjusted list sizing/tuning from **10 → 15** for paginated responses (see commit `23f82bf`).
-
-#### Fixed
-- Fixed a state/interaction issue between **clicked items and pagination** (see commit `eb34d36`).
+- **Certificates Endpoints**: Added listing and publishing endpoints for portfolio certifications.
+- **Pagination Tuning**: Adjusted list sizing from **10 → 15** for paginated responses.
+- **Bug Fixes**: Fixed state interaction issues between clicked items and pagination.
 
 ### Version 1.4.0 - March 5, 2026
-
-Feature + reliability release.
-
-#### Added
-- **YouTube MP3 helper endpoint** (`GET /yt`) backed by RapidAPI, returning both `url` and extracted `title`.
-- **RapidAPI configuration variables** (`RAPIDKEY`, `RAPIDHOST`) documented in the setup and environment variable matrix.
-
-#### Changed
-- `POST /ai/chat` now strips Pollinations “Support/Ad” footer content from responses and includes safer parsing/validation of the upstream payload.
-- `POST /blog` now auto-assigns a monotonically increasing `id` when appending new blog posts.
-- Air dev config updated to stop on build errors and clear the screen on rebuild for a cleaner dev loop.
+- **YouTube MP3 Helper**: Added `GET /yt` endpoint backed by RapidAPI.
+- **AI Chat Optimization**: Stripped Pollinations "Ad" footer and improved payload parsing.
+- **Blog IDs**: Implemented auto-assignment of monotonically increasing IDs for blog posts.
+- **Hot Reload Improvements**: Updated Air config to stop on build errors and clear screen on rebuild.
 
 ### Version 1.3.2 - February 14, 2026
-
-Documentation-focused release.
-
-#### Added
-- Documentation section explaining where to find canonical references (routes, env vars, middleware) and how to explore the API.
-- Component responsibilities matrix in the architecture chapter for quicker onboarding.
-
-#### Changed
-- API endpoint matrix now highlights permissions, data sources, and cache behaviour.
-- Architecture diagrams upgraded with cache-awareness plus external integrations (GitHub Gist, Pollinations AI, Telegram API).
-- README acknowledgement now mentions Qodo assistance for documentation and code review.
-
-### Version 1.3.1 - February 12, 2026
-
-Updates gathered from commit `5ae36f8`.
-
-#### Added
-- **Public blog endpoint** (`GET /blog`) re-registered so it is part of the router again and exposed through the API matrix.
-
-#### Changed
-- Simplified `GET /blog` handler to always return the full reversed list from `blog.json`, temporarily disabling the unfinished pagination cache to avoid stale data.
-- Re-enabled localhost (`http://localhost:5173`) as an allowed origin in the CORS middleware to unblock local frontend testing sessions.
+- **Documentation Overhaul**: Added architecture diagrams, component responsibilities matrix, and canonical reference guides.
 
 ### Version 1.3.0 - February 7, 2026
-
-Updates gathered from commits `231d625`, `886400b`, and `79880e1`.
-
-#### Added
-- **Manga utility endpoint** (`GET /manga`) that supports search, chapter listing, and inline chapter reading workflows.
-- **Telegram storage bridge** with `POST /upload` for administrators and `GET /images` for public consumption, enabling offloaded asset hosting.
-- **Expanded README endpoint matrix** covering required query/body parameters and usage examples for new routes.
-
-#### Changed
-- Documented the new pagination behaviour for `GET /feedback` and aligned API docs with the latest permission matrix.
-- Clarified AI chat usage to match the updated `/ai/chat` path and payload structure.
+- **Manga Utility**: Added `GET /manga` supporting search, chapter listing, and reading workflows.
+- **Telegram Storage Bridge**: Implemented `POST /upload` (admin) and `GET /retrieve` (public) for offloaded assets.
 
 ### Version 1.2.0 - January 19, 2026
-
-#### Added
-- Enhanced AI chat agent with improved response formatting
-- Better error handling for API requests
-- Comprehensive logging system with timestamp formatting
-
-#### Fixed
-- Baybayin transliterator character mapping improvements
-- CORS configuration for production deployment
-- Cookie handling middleware stability
-
-#### Changed
-- Updated Go version to 1.25.0
-- Improved project structure documentation
-- Enhanced middleware permission system
+- **Enhanced AI Agent**: Improved response formatting and error handling for Pollinations AI.
+- **Logging System**: Implemented comprehensive request logging with timestamp formatting.
 
 ### Version 1.1.0 - January 3, 2026
-
-#### Added
-- Three-tier permission system (ALL, COOKIE, ADMIN)
-- Cookie handler middleware for secure authentication
-- Admin-level endpoint protection
-- Enhanced request logging and monitoring
-
-#### Fixed
-- Security improvements for POST endpoints
-- Better error handling for unauthorized requests
-
-#### Changed
-- Restructured middleware architecture
-- Improved endpoint registration system
+- **Three-tier Permission System**: Introduced `ALL`, `COOKIE`, and `ADMIN` access levels.
+- **Auth Middleware**: Added cookie handler and admin-level protection.
 
 ### Version 1.0.0 - January 1, 2026
-
-#### Added
-- Baybayin transliterator endpoint with Unicode support
-- AI chat agent integration with Pollinations AI
-- Complete Filipino script character mapping
-- Text normalization for accurate transliteration
-
-#### Fixed
-- Baybayin character encoding issues
-- String processing for special characters
-- Transliteration accuracy improvements
-
-#### Changed
-- Enhanced API response formatting
-- Improved error messages for better debugging
-
-### Version 0.9.0 - December 31, 2025
-
-#### Added
-- Initial Baybayin transliterator implementation
-- Basic character mapping system
-- Text processing utilities
-
-#### Fixed
-- Initial transliteration algorithm
-- Character recognition patterns
+- **Baybayin Transliterator**: Initial release with complete Unicode character mapping and normalization.
 
 ### Version 0.8.0 - December 30, 2025
-
-#### Added
-- Core API structure with Gin framework
-- GitHub Gist integration for data management
-- Basic CORS configuration
-- Environment variable support
-
-#### Features
-- RESTful API endpoints for portfolio data
-- Dynamic data fetching from GitHub Gist
-- Hot reload development setup with Air
-- Comprehensive error handling
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
-
-### Additional Terms
-
-- **Attribution**: Attribution to the original author (Ryann Kim Sesgundo) is appreciated but not required
-- **GitHub Integration**: Users are responsible for complying with GitHub's Terms of Service and API usage policies
-- **Data Privacy**: Users must ensure compliance with applicable data protection regulations
-- **Security**: Implement appropriate security measures before deploying to production
-
-## 👨‍💻 Author
-
-**Ryann Kim Sesgundo (MPOP Reverse II)**
-- Email: weryses19@gmail.com
-- GitHub: [@RyannKim327](https://github.com/RyannKim327)
-- Portfolio: [ryannkim327.is-a.dev](https://ryannkim327.is-a.dev)
-
-## 🕒 Changelog
-
-### v1.4.0 (2026-03-28)
-- Added manual request limits and reduced overall limits.
-- Optimized API performance for high-traffic scenarios.
-
-### v1.3.0 (2026-03-24)
-- **Breaking Change**: Migrated contact system from email-based to admin cloud-base.
-- Enhanced reliability of contact message delivery.
-
-### v1.2.0 (2026-03-23)
-- Added Blog Editing capabilities for administrators.
-- Fixed critical data type errors in experience and feedback models.
-
-### v1.1.0 (2026-03-19)
-- Implemented global caching system to reduce GitHub Gist API dependency.
-- Updated experience endpoints (Changed from POST to PUT for updates).
-
-## 🙏 Acknowledgments
-
-- [Gin Web Framework](https://gin-gonic.com/) for the excellent HTTP framework
-- [Air](https://github.com/cosmtrek/air) for hot reload development
-- [Pollinations AI](https://pollinations.ai/) for AI chat integration
-- [GitHub Gist API](https://docs.github.com/en/rest/gists) for data storage solution
-- [GoDotEnv](https://github.com/joho/godotenv) for environment variable management
-- [Gin CORS](https://github.com/gin-contrib/cors) for Cross-Origin Resource Sharing support
-- **[Qodo Command](https://github.com/qodo-ai)** and **Google Gemini** for documentation assistance and automated code review feedback
-
----
-
-**Note**: This backend is designed as a centralized hub for managing deployed projects across web and mobile platforms. The API is optimized for portfolio websites and applications requiring dynamic content management.
+- **Initial Release**: Core RESTful API with Gin and GitHub Gist integration.
