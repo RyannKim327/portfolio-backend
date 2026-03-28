@@ -60,8 +60,13 @@ func blog_handler(ctx *gin.Context) {
 
 	// TODO: To create a version for last page
 	if end > total {
-		end = end - (total - start - 1)
+		end = (total - (start - end)) - limit
 	}
+
+	// TODO: This is for furture debugging
+	// fmt.Printf("Start %d\n", start)
+	// fmt.Printf("End %d\n", end)
+	// fmt.Printf("Limit %d\n", limit)
 
 	// TODO: Condition of paginator
 	if start >= len(data) && data != nil {
