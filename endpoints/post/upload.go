@@ -26,113 +26,84 @@ var Upload = utils.Route{
 }
 
 func uploadFile(ctx *gin.Context) {
-	// TODO: Initiation of url for sending photo
-	api_key := os.Getenv("TG_API")
-	chat_id := os.Getenv("TG_CHATID")
+	apiKey := os.Getenv("TG_API")
+	chatID := os.Getenv("TG_CHATID")
 
-	// TODO: To fetch file from uploads
+	// Fetch file
 	file, err := ctx.FormFile("file")
 	if err != nil {
-		ctx.JSON(500, gin.H{
-			"error": err.Error(),
-		})
+		ctx.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
 
-	open, err := file.Open()
+	f, err := file.Open()
 	if err != nil {
-		ctx.JSON(500, gin.H{
-			"error": err.Error(),
-		})
+		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
+	defer f.Close()
 
-	defer open.Close()
-
-	// TODO: Create a copy for mimetype
-
-	copy_, err := file.Open()
-	if err != nil {
-		ctx.JSON(500, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-	defer copy_.Close()
-
+	// Read first 512 bytes for MIME detection
 	buf := make([]byte, 512)
-	_, err = copy_.Read(buf)
-	if err != nil {
-		ctx.JSON(500, gin.H{
-			"error": err.Error(),
-		})
+	n, err := f.Read(buf)
+	if err != nil && err != io.EOF {
+		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
 
-	// TODO: Initialized file_url
-	file_url := fmt.Sprintf("https://api.telegram.org/bot%s/sendPhoto", api_key)
-	mimeType := http.DetectContentType(buf)
+	mimeType := http.DetectContentType(buf[:n])
 
-	// TODO: Creating buffers for Telegram Upload
+	// Prepare multipart buffer
 	var buff bytes.Buffer
-	filetype := "photo"
 	writer := multipart.NewWriter(&buff)
-	_ = writer.WriteField("chat_id", chat_id)
+	_ = writer.WriteField("chat_id", chatID)
 
-	// TODO: To identify what file type it is for different upload
+	fileType := "document"
+	fileURL := fmt.Sprintf("https://api.telegram.org/bot%s/sendDocument", apiKey)
 	if strings.HasPrefix(mimeType, "image") {
-		file_url = fmt.Sprintf("https://api.telegram.org/bot%s/sendPhoto", api_key)
-		filetype = "photo"
+		fileType = "photo"
+		fileURL = fmt.Sprintf("https://api.telegram.org/bot%s/sendPhoto", apiKey)
 	} else if strings.HasPrefix(mimeType, "video") {
-		file_url = fmt.Sprintf("https://api.telegram.org/bot%s/sendVideo", api_key)
-		filetype = "video"
-	} else {
-		file_url = fmt.Sprintf("https://api.telegram.org/bot%s/sendDocument", api_key)
-		filetype = "document"
+		fileType = "document"
+		fileURL = fmt.Sprintf("https://api.telegram.org/bot%s/sendDocument", apiKey)
 	}
 
-	part, err := writer.CreateFormFile(filetype, file.Filename)
+	part, err := writer.CreateFormFile(fileType, file.Filename)
 	if err != nil {
-		ctx.JSON(500, gin.H{
-			"error": err.Error(),
-		})
+		ctx.JSON(500, gin.H{"error": err.Error()})
+		return
 	}
 
-	// TODO: Copying files
-	_, err = io.Copy(part, open)
-	if err != nil {
-		ctx.JSON(500, gin.H{
-			"error": err.Error(),
-		})
+	// Reset file pointer to start for copying
+	if _, err := f.Seek(0, 0); err != nil {
+		ctx.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	if _, err := io.Copy(part, f); err != nil {
+		ctx.JSON(500, gin.H{"error": err.Error()})
+		return
 	}
 
 	writer.Close()
 
-	// TODO: To Fetch data thru API
-	req, err := http.NewRequest("POST", file_url, &buff)
+	// Send to Telegram
+	req, err := http.NewRequest("POST", fileURL, &buff)
 	if err != nil {
-		ctx.JSON(500, gin.H{
-			"error": err.Error(),
-		})
+		ctx.JSON(500, gin.H{"error": err.Error()})
+		return
 	}
-
 	req.Header.Set("Content-Type", writer.FormDataContentType())
-	req.ContentLength = int64(buff.Len())
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
-	// TODO: Return error
 	if err != nil {
-		ctx.JSON(500, gin.H{
-			"error": err.Error(),
-		})
+		ctx.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-
 	defer resp.Body.Close()
 
 	respBody, _ := io.ReadAll(resp.Body)
-
 	ctx.JSON(200, gin.H{
 		"from": json.RawMessage(respBody),
 	})

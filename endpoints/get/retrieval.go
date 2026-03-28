@@ -64,7 +64,7 @@ func fetchFile(ctx *gin.Context) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		ctx.JSON(500, gin.H{
+		ctx.JSON(resp.StatusCode, gin.H{
 			"error": err.Error(),
 		})
 		return
