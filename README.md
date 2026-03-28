@@ -239,7 +239,7 @@ The README doubles as the living reference, but the project ships with several c
 ### System Architecture
 
 ```mermaid
-flowchart TD
+graph TD
     A[Client Apps (Web, Mobile, CLI)] --> B[Gin Router]
     B --> C{Permission Tier}
     C -->|ALL| D[Handlers]
