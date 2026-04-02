@@ -6,7 +6,7 @@ A comprehensive Go-based REST API backend designed to serve portfolio data throu
 
 ![Go](https://img.shields.io/badge/Go-1.25.3-00ADD8?logo=go&logoColor=white)
 ![Gin](https://img.shields.io/badge/Gin-v1.11.0-00ADD8?logo=go&logoColor=white)
-![Version](https://img.shields.io/badge/version-v1.6.1-blue)
+![Version](https://img.shields.io/badge/version-v1.6.2-blue)
 [![wakatime](https://wakatime.com/badge/user/4d42a5c3-9ffc-44f5-a481-76e38ea4c4e2/project/9d6ad33d-7c40-4bb3-8b4a-29f8d61a6a76.svg)](https://wakatime.com/badge/user/4d42a5c3-9ffc-44f5-a481-76e38ea4c4e2/project/9d6ad33d-7c40-4bb3-8b4a-29f8d61a6a76)
 
 </div>
@@ -25,6 +25,7 @@ A comprehensive Go-based REST API backend designed to serve portfolio data throu
 - **Modular Architecture** with clean separation of concerns
 - **Unicode Support** for Baybayin script rendering
 - **Caching System** for improved performance
+- **Resume Data Delivery** via dedicated dev endpoint
 
 ## 📋 Table of Contents
 
@@ -140,6 +141,7 @@ PORT=8000
 | GET    | `/manga`       | ALL        | Manga helper utility          | Use `s` for search, `r` for series, `c` for chapter.                |
 | GET    | `/set-cookie`  | ALL        | Issues temporary cookie       | Sets `temporary` cookie (30m) for cookie-protected access.          |
 | GET    | `/yt`          | ALL        | YouTube MP3 downloader helper | Requires `videoID` query. Uses RapidAPI.                            |
+| GET    | `/dev`         | ALL        | Resume/Dev data retrieval     | Retrieves `resume.json` from GitHub Gist.                           |
 | GET    | `/contact`     | ADMIN      | Contact message list          | Admin-only view of received messages.                               |
 | POST   | `/feedback`    | COOKIE     | Stores feedback via Gist      | Requires `temporary` cookie + JSON body.                            |
 | POST   | `/contact`     | COOKIE     | Submits contact message       | Requires `temporary` cookie.                                        |
@@ -611,7 +613,13 @@ export APP_ENV=development
 
 ## 📝 Changelog
 
-### Version 1.6.1 - March 28, 2026 (Current)
+### Version 1.6.2 - April 2, 2026 (Current)
+
+- **New Resume Endpoint**: Added `GET /dev` endpoint to retrieve resume data from GitHub Gist.
+- **Pagination Optimization**: Fine-tuned pagination limits for `/blog` (8 → 11) and `/certs` (8 → 5) to balance data density and performance.
+- **Enhanced Route Architecture**: Formalized the development route integration within the unified endpoint matrix.
+
+### Version 1.6.1 - March 28, 2026
 
 - **Paginator Completion**: Successfully finalized the paginator logic for improved data navigation across paginated endpoints.
 - **Request Limiting**: Implemented manual request limits and fine-tuned overall thresholds to enhance API stability and prevent abuse.

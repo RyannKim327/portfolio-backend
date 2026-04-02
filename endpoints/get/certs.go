@@ -20,7 +20,7 @@ var Certificates = utils.Route{
 
 func certi_handler(ctx *gin.Context) {
 	page := 1
-	limit := 8
+	limit := 5
 
 	if ctx.Query("limit") != "" {
 		if l, err := strconv.Atoi(ctx.Query("limit")); err == nil && l > 0 {

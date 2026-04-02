@@ -18,6 +18,7 @@ var Routes = []utils.Route{
 	get.Blog,
 	get.Certificates,
 	get.Contact,
+	get.Dev,
 	get.Experiences,
 	get.Feedback,
 	get.Manga,
