@@ -11,6 +11,7 @@ var Poetry = utils.Route{
 	Method: utils.METHOD_GET,
 	Handler: func(ctx *gin.Context) {
 		data := utils.GistHandlerList("poetry.json")
+
 		utils.Reverse(data)
 		ctx.JSON(200, gin.H{
 			"count": len(data),

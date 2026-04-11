@@ -20,6 +20,7 @@ func GistHandlerList(file string) []gin.H {
 	if !ok {
 		return []gin.H{
 			{
+				"err":   ok,
 				"error": "Have some bugs",
 			},
 		}
