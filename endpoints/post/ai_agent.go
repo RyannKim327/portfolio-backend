@@ -3,14 +3,19 @@ package post
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"regexp"
 
 	"portfolio-backend/utils"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
+
+var _ = godotenv.Load()
 
 var AIAgent = utils.Route{
 	Path:       "/ai/chat",
@@ -46,16 +51,17 @@ func aiagent(ctx *gin.Context) {
 	msgs = append(msgs, body.Messages...)
 
 	reqBody, _ := json.Marshal(map[string]any{
-		"model":       "openai-fast",
-		"messages":    msgs,
-		"temperature": 1,
-		"max_tokens":  1000,
-		"stream":      false,
+		"model":    "openai/gpt-4o-mini",
+		"messages": msgs,
+		// "temperature": 1,
+		// "max_tokens":  1000,
+		"stream": false,
 	})
 
 	// TODO: To Fetch data thru API
-	req, _ := http.NewRequest("POST", "https://text.pollinations.ai/openai", bytes.NewBuffer(reqBody))
+	req, _ := http.NewRequest("POST", "https://openrouter.ai/api/v1/chat/completions", bytes.NewBuffer(reqBody))
 
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("AI_API")))
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
 
@@ -85,7 +91,7 @@ func aiagent(ctx *gin.Context) {
 
 	if !ok || len(choices) <= 0 {
 		ctx.JSON(500, gin.H{
-			"error": "Invalid API response",
+			"error": "Invalid API response A",
 		})
 		return
 	}
@@ -94,7 +100,7 @@ func aiagent(ctx *gin.Context) {
 
 	if !ok || len(choices) <= 0 {
 		ctx.JSON(500, gin.H{
-			"error": "Invalid API response",
+			"error": "Invalid API response B",
 		})
 		return
 	}
@@ -102,7 +108,7 @@ func aiagent(ctx *gin.Context) {
 	message, ok := choice["message"].(map[string]interface{})
 	if !ok || len(choices) <= 0 {
 		ctx.JSON(500, gin.H{
-			"error": "Invalid API response",
+			"error": "Invalid API response C",
 		})
 		return
 	}
