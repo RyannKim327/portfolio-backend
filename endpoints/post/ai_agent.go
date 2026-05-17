@@ -51,7 +51,7 @@ func aiagent(ctx *gin.Context) {
 	msgs = append(msgs, body.Messages...)
 
 	reqBody, _ := json.Marshal(map[string]any{
-		"model":    "openai/gpt-4o-mini",
+		"model":    "openai/gpt-3.5-turbo-0613",
 		"messages": msgs,
 		// "temperature": 1,
 		// "max_tokens":  1000,
