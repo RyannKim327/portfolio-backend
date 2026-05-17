@@ -640,7 +640,11 @@ export APP_ENV=development
 
 ## 📝 Changelog
 
-### Version 1.7.0 - May 14, 2026 (Current)
+### Version 1.7.1 - May 17, 2026 (Current)
+
+- **AI Agent Fixes**: Enhanced error reporting and validation for OpenRouter AI responses.
+
+### Version 1.7.0 - May 14, 2026
 
 - **NGL Proxy Integration**: Added `POST /ngl` endpoint to proxy anonymous messages to NGL.link.
 - **Documentation Update**: Updated README with new features, architecture diagrams, and Wakatime badge.
