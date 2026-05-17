@@ -91,7 +91,7 @@ func aiagent(ctx *gin.Context) {
 
 	if !ok || len(choices) <= 0 {
 		ctx.JSON(500, gin.H{
-			"error": "Invalid API response A",
+			"error": "Invalid API response due to choices formating",
 		})
 		return
 	}
@@ -100,7 +100,7 @@ func aiagent(ctx *gin.Context) {
 
 	if !ok || len(choices) <= 0 {
 		ctx.JSON(500, gin.H{
-			"error": "Invalid API response B",
+			"error": "Invalid API response due to choices length",
 		})
 		return
 	}
@@ -108,7 +108,7 @@ func aiagent(ctx *gin.Context) {
 	message, ok := choice["message"].(map[string]interface{})
 	if !ok || len(choices) <= 0 {
 		ctx.JSON(500, gin.H{
-			"error": "Invalid API response C",
+			"error": "Invalid API response due to invalidity of message",
 		})
 		return
 	}
