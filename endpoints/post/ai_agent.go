@@ -91,7 +91,7 @@ func aiagent(ctx *gin.Context) {
 
 	if !ok || len(choices) <= 0 {
 		ctx.JSON(500, gin.H{
-			"error": "Invalid API response due to choices formating",
+			"error": apiResponse, // "Invalid API response due to choices formating",
 		})
 		return
 	}
