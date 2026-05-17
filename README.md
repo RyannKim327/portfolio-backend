@@ -6,8 +6,8 @@ A comprehensive Go-based REST API backend designed to serve portfolio data throu
 
 ![Go](https://img.shields.io/badge/Go-1.25.3-00ADD8?logo=go&logoColor=white)
 ![Gin](https://img.shields.io/badge/Gin-v1.11.0-00ADD8?logo=go&logoColor=white)
-![Version](https://img.shields.io/badge/version-v1.6.2-blue)
-[![wakatime](https://wakatime.com/badge/user/4d42a5c3-9ffc-44f5-a481-76e38ea4c4e2/project/9d6ad33d-7c40-4bb3-8b4a-29f8d61a6a76.svg)](https://wakatime.com/badge/user/4d42a5c3-9ffc-44f5-a481-76e38ea4c4e2/project/9d6ad33d-7c40-4bb3-8b4a-29f8d61a6a76)
+![Version](https://img.shields.io/badge/version-v1.7.0-blue)
+[![wakatime](https://wakatime.com/badge/github/RyannKim327/portfolio-backend.svg)](https://wakatime.com/badge/github/RyannKim327/portfolio-backend)
 
 </div>
 
@@ -16,7 +16,8 @@ A comprehensive Go-based REST API backend designed to serve portfolio data throu
 - **RESTful API** with clean endpoint structure
 - **GitHub Gist Integration** for dynamic data management
 - **Baybayin Transliterator** for Filipino script conversion
-- **AI Chat Agent** powered by Pollinations AI
+- **AI Chat Agent** powered by GPT-4o-mini via OpenRouter
+- **NGL Proxy Integration** for anonymous messaging relay
 - **Three-tier Permission System** (ALL, COOKIE, ADMIN)
 - **CORS Support** with configurable origins
 - **Hot Reload Development** with Air
@@ -49,6 +50,7 @@ A comprehensive Go-based REST API backend designed to serve portfolio data throu
 - Go 1.25.3 or higher
 - Git
 - GitHub Personal Access Token (for Gist integration)
+- OpenRouter API Key (for AI chat integration)
 - [Air](https://github.com/cosmtrek/air) for hot reload development (optional but recommended)
 
 ### Setup
@@ -80,6 +82,7 @@ A comprehensive Go-based REST API backend designed to serve portfolio data throu
    TG_CHATID=your_telegram_chat_or_channel_id
    RAPIDKEY=your_rapidapi_key
    RAPIDHOST=youtube-mp36.p.rapidapi.com
+   AI_API=your_openrouter_api_key
    PORT=8000
    ```
 
@@ -106,6 +109,7 @@ TG_API=your_telegram_bot_token
 TG_CHATID=your_telegram_chat_or_channel_id
 RAPIDKEY=your_rapidapi_key
 RAPIDHOST=youtube-mp36.p.rapidapi.com
+AI_API=your_openrouter_api_key
 PORT=8000
 ```
 
@@ -121,6 +125,7 @@ PORT=8000
 | `TG_CHATID` | Telegram chat/channel ID that receives uploaded media               | Yes (for uploads)        |
 | `RAPIDKEY`  | RapidAPI key used by `/yt`                                          | Yes (for `/yt`)          |
 | `RAPIDHOST` | RapidAPI host used by `/yt` (e.g. `youtube-mp36.p.rapidapi.com`)    | Yes (for `/yt`)          |
+| `AI_API`    | OpenRouter API key used for `/ai/chat`                              | Yes (for `/ai/chat`)     |
 | `PORT`      | Server port (defaults to 8000 if unset)                             | No                       |
 
 ## 🌐 API Endpoints
@@ -146,7 +151,8 @@ PORT=8000
 | POST   | `/feedback`    | COOKIE     | Stores feedback via Gist      | Requires `temporary` cookie + JSON body.                            |
 | POST   | `/contact`     | COOKIE     | Submits contact message       | Requires `temporary` cookie.                                        |
 | POST   | `/poetry`      | ADMIN      | Publishes new poem entries    | Requires `X-API-Key` header (matches `POST_API`).                   |
-| POST   | `/ai/chat`     | ALL        | Pollinations chat relay       | Accepts ChatGPT-style `messages` array.                             |
+| POST   | `/ai/chat`     | ALL        | GPT-4o-mini chat relay        | Accepts ChatGPT-style `messages` array via OpenRouter.              |
+| POST   | `/ngl`         | ALL        | NGL message proxy             | Proxies anonymous messages to NGL.link.                             |
 | POST   | `/blog`        | ADMIN      | Creates new blog post         | Requires `X-API-Key` header. Auto-assigns ID.                       |
 | POST   | `/certs`       | ADMIN      | Append a certificate entry    | Requires `X-API-Key` header.                                        |
 | POST   | `/upload`      | ADMIN      | Telegram upload bridge        | `multipart/form-data` with `image` field.                           |
@@ -204,7 +210,8 @@ curl "http://localhost:8000/retrieve?file=AgACAgUAAxkBAAIBQWdow"
 #### POST /ai/chat
 
 - **Body**: Chat-style payload with `messages` array.
-- **Timeouts**: Requests are proxied to Pollinations AI; keep payloads compact to avoid upstream limits.
+- **Model**: Uses `openai/gpt-4o-mini` via OpenRouter.
+- **Headers**: Requires `AI_API` environment variable for authorization.
 
 ```bash
 curl -X POST http://localhost:8000/ai/chat \\
@@ -213,6 +220,20 @@ curl -X POST http://localhost:8000/ai/chat \\
     "messages": [
       {"role": "user", "content": "Hello, how are you?"}
     ]
+  }'
+```
+
+#### POST /ngl
+
+- **Body**: JSON payload with `username` and `question`.
+- **Behavior**: Proxies the submission to NGL.link API.
+
+```bash
+curl -X POST http://localhost:8000/ngl \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "username": "example_user",
+    "question": "Ask me anything!"
   }'
 ```
 
@@ -255,7 +276,7 @@ The README doubles as the living reference, but the project ships with several c
 
 - **Gin Router**: Terminates HTTP traffic, applies CORS/default headers, and dispatches into the routing matrix declared in `endpoints/`.
 - **Permission Tier**: Unified middleware enforces `ALL`, `COOKIE`, or `ADMIN` access levels before any handler executes business logic.
-- **Handler Layer**: Consolidates response shaping, cache orchestration, and fan-out to third-party services such as GitHub Gist, Pollinations AI, and Telegram Bot API.
+- **Handler Layer**: Consolidates response shaping, cache orchestration, and fan-out to third-party services such as GitHub Gist, OpenRouter (GPT), and Telegram Bot API.
 - **Caching Strategy**:
   - **Global Gist Cache**: In-memory cache for all Gist `GET` requests with a 5-minute TTL, implemented in `utils/gist.go`.
   - **Endpoint-specific Cache**: Specialized caching for `/feedback` and `/blog` to handle pagination and high-traffic needs.
@@ -276,9 +297,9 @@ flowchart TD
     G -->|Yes| Q[JSON Response]
     G -->|No| H{Data Source}
     H -->|Portfolio & Content| I[GitHub Gist API]
-    H -->|AI Chat| J[Pollinations AI]
+    H -->|AI Chat| J[OpenRouter / GPT-4o-mini]
     H -->|Media Bridge| K[Telegram Bot API]
-    H -->|Scrapers & Local Ops| L[Internal Processors<br/>Baybayin, Manga, etc.]
+    H -->|Scrapers & Local Ops| L[Internal Processors<br/>Baybayin, Manga, NGL Proxy, etc.]
     I --> M[Normalizer + Cache Writer]
     J --> M
 ```
@@ -291,7 +312,7 @@ flowchart TD
 | Middleware (`middleware/`) | Enforces permission tiers (`ALL`, `COOKIE`, `ADMIN`), sets headers, and logs requests          | Centralizes security and observability            |
 | Handlers (`endpoints/`)    | Business logic, payload binding, and response formatting                                       | Divided into `get/`, `post/`, and `put/` packages |
 | Cache Layer                | In-memory storage with TTL (default 5m) for Gist reads                                         | Reduces GitHub API rate-limit consumption         |
-| External Services          | GitHub Gist (Storage), Pollinations AI (Chat), Telegram (Media Storage), RapidAPI (YouTube DL) | Isolated via `utils` for modularity               |
+| External Services          | GitHub Gist (Storage), OpenRouter (AI), Telegram (Media Storage), RapidAPI (YouTube DL)        | Isolated via `utils` for modularity               |
 | Utilities (`utils/`)       | Shared structures, Gist API clients, and local script processors                               | Enforces DRY principles across handlers           |
 
 ### Project Structure (High-level)
@@ -339,7 +360,7 @@ sequenceDiagram
     participant Cache as Cache Layer
     participant G as GitHub Gist
     participant T as Telegram API
-    participant AI as Pollinations AI
+    participant AI as OpenRouter API
     participant S as Scrapers/Utils
 
     C->>R: HTTP Request
@@ -352,7 +373,7 @@ sequenceDiagram
         H->>G: Fetch portfolio/feedback data
         H->>AI: Proxy chat payloads
         H->>T: Relay uploads/fetch files
-        H->>S: Execute Baybayin/manga/yt logic
+        H->>S: Execute Baybayin/manga/yt/ngl logic
         G-->>H: JSON blobs
         AI-->>H: AI responses
         T-->>H: Telegram payloads
@@ -485,6 +506,11 @@ curl -X POST http://localhost:8000/ai/chat \
   -H "Content-Type: application/json" \
   -d '{"messages":[{"role":"user","content":"Hello!"}]}'
 
+# Test NGL proxy (POST request)
+curl -X POST http://localhost:8000/ngl \
+  -H "Content-Type: application/json" \
+  -d '{"username":"ryannkim327","question":"Hello from CLI!"}'
+
 # Test feedback submission (requires cookie)
 curl -X POST http://localhost:8000/feedback \
   -H "Content-Type: application/json" \
@@ -519,6 +545,7 @@ APP_ENV=development go run index.go
    export POST_API=your_production_post_api_key
    export TG_API=your_production_telegram_bot_token
    export TG_CHATID=your_production_telegram_chat_id
+   export AI_API=your_production_openrouter_api_key
    export PORT=8000
    ```
 
@@ -613,7 +640,21 @@ export APP_ENV=development
 
 ## 📝 Changelog
 
-### Version 1.6.2 - April 2, 2026 (Current)
+### Version 1.7.1 - May 17, 2026 (Current)
+
+- **AI Agent Fixes**: Enhanced error reporting and validation for OpenRouter AI responses.
+
+### Version 1.7.0 - May 14, 2026
+
+- **NGL Proxy Integration**: Added `POST /ngl` endpoint to proxy anonymous messages to NGL.link.
+- **Documentation Update**: Updated README with new features, architecture diagrams, and Wakatime badge.
+
+### Version 1.6.3 - April 22, 2026
+
+- **AI Model Upgrade**: Migrated from Pollinations AI to `GPT-4o-mini` via OpenRouter for improved chat responses and reliability.
+- **Dependency Update**: Updated project dependencies to their latest stable versions.
+
+### Version 1.6.2 - April 2, 2026
 
 - **New Resume Endpoint**: Added `GET /dev` endpoint to retrieve resume data from GitHub Gist.
 - **Pagination Optimization**: Fine-tuned pagination limits for `/blog` (8 → 11) and `/certs` (8 → 5) to balance data density and performance.
@@ -675,6 +716,11 @@ export APP_ENV=development
 
 - **Enhanced AI Agent**: Improved response formatting and error handling for Pollinations AI.
 - **Logging System**: Implemented comprehensive request logging with timestamp formatting.
+
+### Version 1.1.0 - January 3, 2026
+
+- **Three-tier Permission System**: Introduced `ALL`, `COOKIE`, and `ADMIN` access levels.
+- **Auth Middleware**: Added cookie handler and admin-level protection.
 
 ### Version 1.1.0 - January 3, 2026
 

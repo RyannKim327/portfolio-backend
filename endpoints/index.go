@@ -29,6 +29,7 @@ var Routes = []utils.Route{
 
 	// TODO: Created AI Endpoint
 	post.AIAgent,
+	post.NGL,
 
 	// TODO: POST Requests
 	post.Blog,

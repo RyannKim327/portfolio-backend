@@ -43,6 +43,11 @@ type BodyAIStructure struct {
 	Messages []GPTMessage `json:"messages"`
 }
 
+type NGLParams struct {
+	Question string `json:"question"`
+	Username string `json:"username"`
+}
+
 type TelegramResponse struct {
 	ChatID   string `json:"chat_id"`
 	Document string `json:"document"`
