@@ -37,6 +37,7 @@ var Routes = []utils.Route{
 	post.Contact,
 	post.Feedback,
 	post.Poetry,
+	post.Project,
 	post.Upload,
 
 	// TODO: PUT Requests
