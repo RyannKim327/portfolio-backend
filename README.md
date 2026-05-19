@@ -6,7 +6,7 @@ A comprehensive Go-based REST API backend designed to serve portfolio data throu
 
 ![Go](https://img.shields.io/badge/Go-1.25.3-00ADD8?logo=go&logoColor=white)
 ![Gin](https://img.shields.io/badge/Gin-v1.11.0-00ADD8?logo=go&logoColor=white)
-![Version](https://img.shields.io/badge/version-v1.7.0-blue)
+![Version](https://img.shields.io/badge/version-v1.7.2-blue)
 [![wakatime](https://wakatime.com/badge/github/RyannKim327/portfolio-backend.svg)](https://wakatime.com/badge/github/RyannKim327/portfolio-backend)
 
 </div>
@@ -27,6 +27,7 @@ A comprehensive Go-based REST API backend designed to serve portfolio data throu
 - **Unicode Support** for Baybayin script rendering
 - **Caching System** for improved performance
 - **Resume Data Delivery** via dedicated dev endpoint
+- **Project Management** via admin-only endpoints
 
 ## 📋 Table of Contents
 
@@ -39,7 +40,7 @@ A comprehensive Go-based REST API backend designed to serve portfolio data throu
 - [Testing](#testing)
 - [Deployment](#deployment)
 - [Troubleshooting](#troubleshooting)
-- [Changelog](#changelog)
+- [Changelog](CHANGELOG.md)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -638,99 +639,18 @@ export APP_ENV=development
 - Application logs: Check console output
 - Request logs: Enabled by default in development mode
 
-## 📝 Changelog
+## 🤝 Contributing
 
-### Version 1.7.1 - May 17, 2026 (Current)
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-- **AI Agent Fixes**: Enhanced error reporting and validation for OpenRouter AI responses.
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-### Version 1.7.0 - May 14, 2026
+## 📄 License
 
-- **NGL Proxy Integration**: Added `POST /ngl` endpoint to proxy anonymous messages to NGL.link.
-- **Documentation Update**: Updated README with new features, architecture diagrams, and Wakatime badge.
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
 
-### Version 1.6.3 - April 22, 2026
 
-- **AI Model Upgrade**: Migrated from Pollinations AI to `GPT-4o-mini` via OpenRouter for improved chat responses and reliability.
-- **Dependency Update**: Updated project dependencies to their latest stable versions.
-
-### Version 1.6.2 - April 2, 2026
-
-- **New Resume Endpoint**: Added `GET /dev` endpoint to retrieve resume data from GitHub Gist.
-- **Pagination Optimization**: Fine-tuned pagination limits for `/blog` (8 → 11) and `/certs` (8 → 5) to balance data density and performance.
-- **Enhanced Route Architecture**: Formalized the development route integration within the unified endpoint matrix.
-
-### Version 1.6.1 - March 28, 2026
-
-- **Paginator Completion**: Successfully finalized the paginator logic for improved data navigation across paginated endpoints.
-- **Request Limiting**: Implemented manual request limits and fine-tuned overall thresholds to enhance API stability and prevent abuse.
-- **System Reliability**: Further optimized the cloud-based contact system for more reliable message delivery to administrators.
-
-### Version 1.6.0 - March 28, 2026
-
-- **Manual Request Limits**: Added manual request limits and reduced overall limits for better API stability.
-- **Enhanced Reliability**: Optimized contact system for admin cloud-based message delivery.
-- **Blog Editing**: Fully implemented blog edit capabilities for administrators via `PUT /blog`.
-
-### Version 1.5.2 - March 24, 2026
-
-- **Contact System Migration**: **Breaking Change**: Migrated contact system from email-based to admin cloud-base for improved reliability.
-- **Singularity Responses**: Added `data` field on **experience** and **projects** for singular response formats.
-
-### Version 1.5.1 - March 19, 2026
-
-- **Global Caching**: Implemented a global in-memory caching system to reduce GitHub Gist API dependency.
-- **Experience Updates**: Updated experience endpoints (Changed from POST to PUT for updates).
-
-### Version 1.5.0 - March 18, 2026
-
-- **Multimedia Update & Security**:
-  - Renamed `/upload-image` to `/upload`.
-  - Renamed `/images` to `/retrieve`.
-  - Enhanced security by using `Abort` instead of simple JSON for failed admin requests.
-  - Added support for all data types via `mimetype` identification.
-
-### Version 1.4.1 - March 14, 2026
-
-- **Certificates Endpoints**: Added listing and publishing endpoints for portfolio certifications.
-- **Pagination Tuning**: Adjusted list sizing from **10 → 15** for paginated responses.
-- **Bug Fixes**: Fixed state interaction issues between clicked items and pagination.
-
-### Version 1.4.0 - March 5, 2026
-
-- **YouTube MP3 Helper**: Added `GET /yt` endpoint backed by RapidAPI.
-- **AI Chat Optimization**: Stripped Pollinations "Ad" footer and improved payload parsing.
-- **Blog IDs**: Implemented auto-assignment of monotonically increasing IDs for blog posts.
-- **Hot Reload Improvements**: Updated Air config to stop on build errors and clear screen on rebuild.
-
-### Version 1.3.2 - February 14, 2026
-
-- **Documentation Overhaul**: Added architecture diagrams, component responsibilities matrix, and canonical reference guides.
-
-### Version 1.3.0 - February 7, 2026
-
-- **Manga Utility**: Added `GET /manga` supporting search, chapter listing, and reading workflows.
-- **Telegram Storage Bridge**: Implemented `POST /upload` (admin) and `GET /retrieve` (public) for offloaded assets.
-
-### Version 1.2.0 - January 19, 2026
-
-- **Enhanced AI Agent**: Improved response formatting and error handling for Pollinations AI.
-- **Logging System**: Implemented comprehensive request logging with timestamp formatting.
-
-### Version 1.1.0 - January 3, 2026
-
-- **Three-tier Permission System**: Introduced `ALL`, `COOKIE`, and `ADMIN` access levels.
-- **Auth Middleware**: Added cookie handler and admin-level protection.
-
-### Version 1.1.0 - January 3, 2026
-
-- **Three-tier Permission System**: Introduced `ALL`, `COOKIE`, and `ADMIN` access levels.
-- **Auth Middleware**: Added cookie handler and admin-level protection.
-
-### Version 1.0.0 - January 1, 2026
-
-- **Baybayin Transliterator**: Initial release with complete Unicode character mapping and normalization.
-
-### Version 0.8.0 - December 30, 2025
-
-- **Initial Release**: Core RESTful API with Gin and GitHub Gist integration.
