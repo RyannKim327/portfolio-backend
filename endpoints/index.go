@@ -25,6 +25,7 @@ var Routes = []utils.Route{
 	get.Poetry,
 	get.Projects,
 	get.Retrieve,
+	get.Wakatime,
 	get.YoutubeDL,
 
 	// TODO: Created AI Endpoint
