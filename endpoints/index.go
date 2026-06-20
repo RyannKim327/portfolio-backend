@@ -28,7 +28,7 @@ var Routes = []utils.Route{
 	get.Wakatime,
 	get.YoutubeDL,
 
-	// TODO: Created AI Endpoint
+	// TODO: Created Cookie but NONE admin Endpoint
 	post.AIAgent,
 	post.NGL,
 
