@@ -26,11 +26,17 @@ var Feedback = utils.Route{
 
 func feedback_handler(ctx *gin.Context) {
 	page := 1
-	limit := 10
+	limit := 7
 
 	if ctx.Query("page") != "" {
 		if p, err := strconv.Atoi(ctx.Query("page")); err == nil && p > 0 {
 			page = p
+		}
+	}
+
+	if ctx.Query("limit") != "" {
+		if l, err := strconv.Atoi(ctx.Query("limit")); err == nil && l > 0 {
+			limit = l
 		}
 	}
 
