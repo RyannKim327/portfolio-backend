@@ -43,6 +43,10 @@ type BodyAIStructure struct {
 	Messages []GPTMessage `json:"messages"`
 }
 
+type AdminSideStructure struct {
+	Key string `json:"key"`
+}
+
 type NGLParams struct {
 	Question string `json:"question"`
 	Username string `json:"username"`

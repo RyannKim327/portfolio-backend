@@ -29,6 +29,7 @@ var Routes = []utils.Route{
 	get.YoutubeDL,
 
 	// TODO: Created Cookie but NONE admin Endpoint
+	post.AdminSide,
 	post.AIAgent,
 	post.NGL,
 
