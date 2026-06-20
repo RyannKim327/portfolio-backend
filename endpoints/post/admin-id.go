@@ -16,7 +16,7 @@ import (
 var _ = godotenv.Load()
 
 var AdminSide = utils.Route{
-	Path:       "/bakitkosasabihinsayo",
+	Path:       "/admin",
 	Method:     utils.METHOD_POST,
 	Permission: utils.PERMISSION_ALL,
 	Handler:    adminSide,
