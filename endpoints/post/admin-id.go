@@ -38,10 +38,16 @@ func adminSide(ctx *gin.Context) {
 	fmt.Println(env_admin)
 	fmt.Println(body.Key)
 
+	const (
+		second = 1000
+		minute = second * 60
+		hour   = minute * 60
+	)
+
 	if body.Key == env_admin {
 		data := gin.H{
 			"code": post_admin,
-			"time": time.Now().UnixMilli() + 86400000,
+			"time": time.Now().UnixMilli() + (hour * 2),
 		}
 
 		jsonData, err := json.Marshal(data)
