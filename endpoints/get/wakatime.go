@@ -15,10 +15,17 @@ import (
  * TODO: This is just a template for the other endpoint
  */
 
+type Repo struct {
+	HtmlUrl     string `json:"html_url"`
+	Description string `json:"description"`
+	Name        string `json:"name"`
+}
+
 type WakaData struct {
 	Name         string `json:"urlencoded_name"`
 	Started      string `json:"created_at"`
 	LastModified string `json:"last_heartbeat_at"`
+	Respository  Repo   `json:"repository"`
 }
 
 type WakaResponse struct {
