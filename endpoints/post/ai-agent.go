@@ -24,42 +24,66 @@ var AIAgent = utils.Route{
 	Handler:    aiagent,
 }
 
+var fallbackModels = []string{
+	"google/gemma-4-26b-a4b-it:free",
+	"google/gemma-4-26b-a4b-it",
+}
+
+type aiResponse struct {
+	Role    string
+	Content string
+}
+
 func aiagent(ctx *gin.Context) {
 	var body utils.BodyAIStructure
 
 	if err := ctx.ShouldBindJSON(&body); err != nil {
-		ctx.JSON(400, gin.H{
+		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
-	msgs := []utils.GPTMessage{}
 
-	// TODO: To add default formatting for AI Responses
-	if len(msgs) <= 0 {
-		msgs = append(msgs, utils.GPTMessage{
-			Role:    "user",
+	msgs := []utils.GPTMessage{
+		{
+			Role:    "system",
 			Content: "You are capable to use markdown. Just response in very detailed but readable.",
-		})
-		msgs = append(msgs, utils.GPTMessage{
-			Role:    "assistant",
-			Content: "Okay. I will, now what's on your mind?",
-		})
+		},
 	}
-
-	// TODO: Basically to append two lists
 	msgs = append(msgs, body.Messages...)
 
-	reqBody, _ := json.Marshal(map[string]any{
-		"model":    "google/gemma-4-26b-a4b-it:free",
-		"messages": msgs,
-		// "temperature": 1,
-		// "max_tokens":  1000,
-		"stream": false,
-	})
+	var lastErr error
+	for _, model := range fallbackModels {
+		res, err := requestAI(msgs, model)
+		if err == nil {
+			ctx.JSON(http.StatusOK, gin.H{
+				"role":    res.Role,
+				"content": res.Content,
+			})
+			return
+		}
+		lastErr = err
+	}
 
-	// TODO: To Fetch data thru API
-	req, _ := http.NewRequest("POST", "https://openrouter.ai/api/v1/chat/completions", bytes.NewBuffer(reqBody))
+	ctx.JSON(http.StatusInternalServerError, gin.H{
+		"error": fmt.Sprintf("All AI models failed. Last error: %v", lastErr),
+	})
+}
+
+func requestAI(msgs []utils.GPTMessage, model string) (*aiResponse, error) {
+	reqBody, err := json.Marshal(map[string]any{
+		"model":    model,
+		"messages": msgs,
+		"stream":   false,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode request: %w", err)
+	}
+
+	req, err := http.NewRequest("POST", "https://openrouter.ai/api/v1/chat/completions", bytes.NewBuffer(reqBody))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", os.Getenv("AI_API")))
 	req.Header.Set("Accept", "application/json")
@@ -68,63 +92,59 @@ func aiagent(ctx *gin.Context) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		ctx.JSON(500, gin.H{
-			"error": err.Error(),
-		})
-		return
+		return nil, fmt.Errorf("request error for model %s: %w", model, err)
 	}
-
 	defer resp.Body.Close()
 
-	respBody, _ := io.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response for model %s: %w", model, err)
+	}
 
-	// TODO: Decoder
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("model %s returned status %d: %s", model, resp.StatusCode, string(respBody))
+	}
+
 	var apiResponse map[string]interface{}
 	if err := json.Unmarshal(respBody, &apiResponse); err != nil {
-		ctx.JSON(500, gin.H{
-			"error": "Failed to parse response",
-		})
-		return
+		return nil, fmt.Errorf("failed to parse JSON response for model %s: %w", model, err)
+	}
+
+	if errObj, exists := apiResponse["error"]; exists && errObj != nil {
+		return nil, fmt.Errorf("API error for model %s: %v", model, errObj)
 	}
 
 	choices, ok := apiResponse["choices"].([]interface{})
-
-	if !ok || len(choices) <= 0 {
-		ctx.JSON(500, gin.H{
-			"error": apiResponse, // "Invalid API response due to choices formating",
-		})
-		return
+	if !ok || len(choices) == 0 {
+		return nil, fmt.Errorf("invalid or empty choices for model %s", model)
 	}
 
 	choice, ok := choices[0].(map[string]interface{})
-
-	if !ok || len(choices) <= 0 {
-		ctx.JSON(500, gin.H{
-			"error": "Invalid API response due to choices length",
-		})
-		return
+	if !ok {
+		return nil, fmt.Errorf("invalid choice format for model %s", model)
 	}
 
 	message, ok := choice["message"].(map[string]interface{})
-	if !ok || len(choices) <= 0 {
-		ctx.JSON(500, gin.H{
-			"error": "Invalid API response due to invalidity of message",
-		})
-		return
+	if !ok {
+		return nil, fmt.Errorf("invalid message format for model %s", model)
 	}
 
-	content := message["content"]
+	role, _ := message["role"].(string)
+	if role == "" {
+		role = "assistant"
+	}
+
+	contentStr, ok := message["content"].(string)
+	if !ok {
+		return nil, fmt.Errorf("invalid content string for model %s", model)
+	}
 
 	pattern := `---\n\*Support Pollinations\.AI:\*\n---\n🌸 \*Ad\* 🌸\nPowered by Pollinations\.AI free text APIs\. \[Support our mission\]\(https:\/\/pollinations\.ai\/redirect\/kofi\) to keep AI accessible for everyone\.`
-
 	re := regexp.MustCompile(pattern)
+	clean := re.ReplaceAllString(contentStr, "")
 
-	str, _ := content.(string)
-
-	clean := re.ReplaceAllString(str, "")
-
-	ctx.JSON(200, gin.H{
-		"role":    message["role"],
-		"content": clean,
-	})
+	return &aiResponse{
+		Role:    role,
+		Content: clean,
+	}, nil
 }
