@@ -29,7 +29,7 @@ func tokenGenerator(length int) (string, error) {
 }
 
 func setCookie(ctx *gin.Context) {
-	cookie, _ := ctx.Cookie("temporary")
+	cookie, _ := ctx.Cookie("mpop_temporary")
 
 	if cookie != "" {
 		ctx.JSON(200, gin.H{
@@ -47,7 +47,7 @@ func setCookie(ctx *gin.Context) {
 	}
 
 	http.SetCookie(ctx.Writer, &http.Cookie{
-		Name:     "temporary",
+		Name:     "mpop_temporary",
 		Value:    value,
 		Path:     "/",
 		MaxAge:   1800,
@@ -58,5 +58,6 @@ func setCookie(ctx *gin.Context) {
 
 	ctx.JSON(200, gin.H{
 		"message": "Token is now generated, you may now continue",
+		"token":   value,
 	})
 }

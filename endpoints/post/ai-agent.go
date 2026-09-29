@@ -25,8 +25,15 @@ var AIAgent = utils.Route{
 }
 
 var fallbackModels = []string{
+	"tencent/hy3",
+	"thinkingmachines/inkling:free",
+	"stealth/space-bunny-alpha",
 	"google/gemma-4-26b-a4b-it:free",
 	"google/gemma-4-26b-a4b-it",
+	"span-01-lite:free",
+	"span-01-lite",
+	"stealth/space-bunny-alpha:free",
+	"openrouter/free",
 }
 
 type aiResponse struct {
