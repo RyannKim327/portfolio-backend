@@ -20,6 +20,7 @@ var Routes = []utils.Route{
 	get.Contact,
 	get.Dev,
 	get.Experiences,
+	get.Download,
 	get.Feedback,
 	get.Manga,
 	get.Poetry,
