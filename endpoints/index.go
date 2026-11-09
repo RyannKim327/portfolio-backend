@@ -38,6 +38,7 @@ var Routes = []utils.Route{
 	post.Blog,
 	post.Certificates,
 	post.Contact,
+	post.Download,
 	post.Feedback,
 	post.Poetry,
 	post.Project,
