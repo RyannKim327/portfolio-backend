@@ -39,6 +39,7 @@ var Routes = []utils.Route{
 	post.Certificates,
 	post.Contact,
 	post.Download,
+	post.DownloadCounts,
 	post.Feedback,
 	post.Poetry,
 	post.Project,

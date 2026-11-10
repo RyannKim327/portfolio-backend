@@ -129,6 +129,8 @@ func Register(routes utils.Route) {
 			app.PUT(routes.Path, RequestHandlerCookie(), routes.Handler)
 		case utils.PERMISSION_ADMIN:
 			app.PUT(routes.Path, RequestHandlerAdmin(), routes.Handler)
+		default:
+			app.POST(routes.Path, routes.Handler)
 		}
 	case utils.METHOD_DELETE:
 		switch routes.Permission {

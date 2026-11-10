@@ -16,6 +16,7 @@ func RequestHandlerCookie() gin.HandlerFunc {
 		if len(key) < 30 || err != nil {
 			ctx.AbortWithStatusJSON(403, gin.H{
 				"error": "Unauthorized",
+				"e":     err,
 			})
 			ctx.Abort()
 			return
