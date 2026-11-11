@@ -21,6 +21,7 @@ var Routes = []utils.Route{
 	get.Dev,
 	get.Experiences,
 	get.Download,
+	get.DownloadLists,
 	get.Feedback,
 	get.Manga,
 	get.Poetry,

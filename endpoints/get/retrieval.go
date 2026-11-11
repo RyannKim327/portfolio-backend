@@ -1,22 +1,22 @@
 package get
 
 import (
+	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
+	"strings"
 
 	utils "portfolio-backend/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
-/*
- * TODO: This is just a template for the other endpoint
- */
-
-type result struct {
+type getFileResult struct {
 	Ok     bool `json:"ok"`
 	Result struct {
 		FilePath string `json:"file_path"`
@@ -29,82 +29,107 @@ var Retrieve = utils.Route{
 	Handler: fetchFile,
 }
 
-func fileDownload(file string) string {
-	// TODO: Setup for credentials and URL
-	api_key := os.Getenv("TG_API")
-	file_url := fmt.Sprintf("https://api.telegram.org/file/bot%s/%s", api_key, file)
-
-	return file_url
+func fileDownload(apiKey, file string) string {
+	return fmt.Sprintf("https://api.telegram.org/file/bot%s/%s", apiKey, file)
 }
 
-func fetchFile(ctx *gin.Context) {
-	// TODO: Setup for credentials and URL
-	api_key := os.Getenv("TG_API")
-	file_id := ctx.Query("file")
-	file_url := fmt.Sprintf("https://api.telegram.org/bot%s/getFile?file_id=%s", api_key, file_id)
+func resolveFilePath(apiKey, fileID string) (string, error) {
+	fileURL := fmt.Sprintf("https://api.telegram.org/bot%s/getFile?file_id=%s", apiKey, url.QueryEscape(fileID))
 
-	req, err := http.NewRequest("GET", file_url, nil)
+	resp, err := http.Get(fileURL)
 	if err != nil {
-		ctx.JSON(500, gin.H{
-			"error": err.Error(),
-		})
+		return "", err
 	}
-
-	// TODO: Request Executor
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	// TODO: To prevent errors
-	if err != nil {
-		ctx.JSON(500, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		ctx.JSON(resp.StatusCode, gin.H{
-			"error": err.Error(),
-		})
+		return "", fmt.Errorf("telegram responded with %s", resp.Status)
+	}
+
+	var data getFileResult
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		return "", err
+	}
+
+	if !data.Ok || data.Result.FilePath == "" {
+		return "", errors.New("invalid file id")
+	}
+
+	return data.Result.FilePath, nil
+}
+
+func fetchFile(ctx *gin.Context) {
+	apiKey := os.Getenv("TG_API")
+
+	var ids []string
+	for _, value := range ctx.QueryArray("file") {
+		for _, id := range strings.Split(value, ",") {
+			if id = strings.TrimSpace(id); id != "" {
+				ids = append(ids, id)
+			}
+		}
+	}
+
+	if len(ids) == 0 {
+		ctx.JSON(400, gin.H{"error": "missing file id"})
 		return
 	}
 
-	// TODO: To send the response data
-	var data result
-	err = json.NewDecoder(resp.Body).Decode(&data)
+	paths := make([]string, 0, len(ids))
+	for _, id := range ids {
+		path, err := resolveFilePath(apiKey, id)
+		if err != nil {
+			ctx.JSON(502, gin.H{"error": err.Error()})
+			return
+		}
+		paths = append(paths, path)
+	}
+
+	first, err := http.Get(fileDownload(apiKey, paths[0]))
 	if err != nil {
-		ctx.JSON(500, gin.H{
-			"err": err.Error(),
-		})
+		ctx.JSON(502, gin.H{"error": err.Error()})
+		return
+	}
+	defer first.Body.Close()
+
+	if first.StatusCode >= 400 {
+		ctx.JSON(502, gin.H{"error": first.Status})
 		return
 	}
 
-	f_url := fileDownload(data.Result.FilePath)
-
-	fileResp, err := http.Get(f_url)
-	if err != nil {
-		ctx.JSON(500, gin.H{
-			"error": err.Error(),
-		})
+	reader := bufio.NewReader(first.Body)
+	peek, err := reader.Peek(512)
+	if err != nil && err != io.EOF && err != bufio.ErrBufferFull {
+		ctx.JSON(502, gin.H{"error": err.Error()})
 		return
 	}
 
-	defer fileResp.Body.Close()
+	name := ctx.Query("name")
+	if name == "" {
+		name = "download"
+	}
 
-	fileBytes, err := io.ReadAll(fileResp.Body)
-	if err != nil {
-		ctx.JSON(500, gin.H{
-			"error": err.Error(),
-		})
+	ctx.Header("Content-Type", http.DetectContentType(peek))
+	ctx.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%q", name))
+	ctx.Status(200)
+
+	if _, err := io.Copy(ctx.Writer, reader); err != nil {
 		return
 	}
 
-	mimeType := http.DetectContentType(fileBytes)
-
-	ctx.Data(200, mimeType, fileBytes)
-
-	ctx.JSON(200, gin.H{
-		"response": "",
-	})
+	for _, path := range paths[1:] {
+		resp, err := http.Get(fileDownload(apiKey, path))
+		if err != nil {
+			return
+		}
+		if resp.StatusCode >= 400 {
+			resp.Body.Close()
+			return
+		}
+		_, err = io.Copy(ctx.Writer, resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			return
+		}
+	}
 }
