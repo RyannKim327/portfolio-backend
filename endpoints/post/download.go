@@ -34,7 +34,7 @@ func download(ctx *gin.Context) {
 	name := strings.ToLower(body.Name)
 
 	newBody := gin.H{
-		"name":         body.Name,
+		"name":         strings.ReplaceAll(body.Name, " ", "+"),
 		"description":  body.Description,
 		"downloadLink": body.DownloadLink,
 	}
